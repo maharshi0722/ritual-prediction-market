@@ -8,19 +8,19 @@ export async function GET() {
         try {
           controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
         } catch {
+          // 🔥 auto-remove dead clients
           sseStore.clients.delete(client);
         }
       };
 
       sseStore.clients.add(client);
 
+      // optional retry hint
       controller.enqueue("retry: 1000\n\n");
 
+      // ✅ IMPORTANT: DO NOT close controller manually
       return () => {
         sseStore.clients.delete(client);
-        try {
-          controller.close();
-        } catch {}
       };
     },
   });
@@ -35,7 +35,8 @@ export async function GET() {
 }
 
 export function emitUpdate(data) {
-  for (const client of sseStore.clients) {
+  // ✅ clone set to avoid mutation issues
+  for (const client of [...sseStore.clients]) {
     try {
       client(data);
     } catch {

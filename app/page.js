@@ -105,18 +105,34 @@ export default function Home() {
     fetchVotes();
 
     const es = new EventSource("/api/stream");
-    es.onmessage = (e) => {
-      const data = JSON.parse(e.data);
-       setVotes(prev => ({
-    ...prev,
-    [data.pid]: {
-      pid: data.pid,
-      yes: data.yes,
-      no: data.no,
-      votes: data.votes || [],
+    es.onopen = () => {
+  fetchVotes(); // 🔁 hard resync when SSE reconnects
+};
+
+   es.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+
+  setVotes(prev => {
+    const current = prev[data.pid];
+    if (!current) return prev;
+
+    // ignore stale updates
+    if (current.yes === data.yes && current.no === data.no) {
+      return prev;
     }
-  }));
+
+    return {
+      ...prev,
+      [data.pid]: {
+        ...current,
+        yes: data.yes,
+        no: data.no,
+        votes: data.votes ?? current.votes,
+      },
     };
+  });
+};
+
 
     return () => es.close();
   }, []);
