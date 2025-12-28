@@ -26,6 +26,10 @@ function AuthModal({
   setEmail,
   password,
   setPassword,
+  username,
+  setUsername,
+  confirmPassword,
+  setConfirmPassword,
   submit,
   error,
   validationError,
@@ -36,6 +40,15 @@ function AuthModal({
       <div style={styles.modal}>
         <h2>{mode === "login" ? "Welcome back" : "Create account"}</h2>
         <p style={styles.modalSub}>Ritual Prediction Market</p>
+
+        {mode === "signup" && (
+          <input
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={styles.input}
+          />
+        )}
 
         <input
           placeholder="Email"
@@ -51,6 +64,16 @@ function AuthModal({
           onChange={(e) => setPassword(e.target.value)}
           style={styles.input}
         />
+
+        {mode === "signup" && (
+          <input
+            placeholder="Confirm password"
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            style={styles.input}
+          />
+        )}
 
         {validationError && <p style={styles.error}>{validationError}</p>}
         {error && <p style={styles.error}>{error}</p>}
@@ -86,6 +109,8 @@ export default function Home() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [username, setUsername] = useState("");
   const [mode, setMode] = useState("login");
 
   const [toast, setToast] = useState("");
@@ -101,51 +126,50 @@ export default function Home() {
 
   /* 🔄 Initial votes + SSE */
   useEffect(() => {
-      refreshUser();   
+    refreshUser();
     fetchVotes();
 
     const es = new EventSource("/api/stream");
+
     es.onopen = () => {
-  fetchVotes(); // 🔁 hard resync when SSE reconnects
-};
-
-   es.onmessage = (e) => {
-  const data = JSON.parse(e.data);
-
-  setVotes(prev => {
-    const current = prev[data.pid];
-    if (!current) return prev;
-
-    // ignore stale updates
-    if (current.yes === data.yes && current.no === data.no) {
-      return prev;
-    }
-
-    return {
-      ...prev,
-      [data.pid]: {
-        ...current,
-        yes: data.yes,
-        no: data.no,
-        votes: data.votes ?? current.votes,
-      },
+      fetchVotes();
     };
-  });
-};
 
+    es.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      setVotes((prev) => {
+        const current = prev[data.pid];
+        if (!current) return prev;
+        if (current.yes === data.yes && current.no === data.no) return prev;
+
+        return {
+          ...prev,
+          [data.pid]: {
+            ...current,
+            yes: data.yes,
+            no: data.no,
+            votes: data.votes ?? current.votes,
+          },
+        };
+      });
+    };
 
     return () => es.close();
   }, []);
 
   async function refreshUser() {
-    const res = await fetch("/api/me", { credentials: "include" });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data.user);
-    } else {
-      setUser(null);
-    }
-  }
+  const res = await fetch("/api/me", { credentials: "include" });
+
+  if (!res.ok) return;
+
+  const data = await res.json();
+
+  // ⛔ ignore empty user (prevents overwrite)
+  if (!data.user) return;
+
+  setUser({ ...data.user });
+}
+
 
   async function fetchVotes() {
     const res = await fetch("/api/predictions");
@@ -161,12 +185,26 @@ export default function Home() {
       setValidationError("Email must contain @");
       return;
     }
+
     if (password.length < 6) {
       setValidationError("Password must be at least 6 characters");
       return;
     }
+
+    if (mode === "signup") {
+      if (!username) {
+        setValidationError("Username required");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setValidationError("Passwords do not match");
+        return;
+      }
+    }
+
     setValidationError("");
-  }, [email, password]);
+  }, [email, password, confirmPassword, username, mode]);
 
   const canSubmit = !validationError && email && password;
 
@@ -178,7 +216,11 @@ export default function Home() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(
+        mode === "signup"
+          ? { email, password, confirmPassword, username }
+          : { email, password }
+      ),
     });
 
     if (!res.ok) {
@@ -189,6 +231,8 @@ export default function Home() {
 
     setEmail("");
     setPassword("");
+    setConfirmPassword("");
+    setUsername("");
     setToast(mode === "signup" ? "Account created 🎉" : "Logged in ✅");
     await refreshUser();
   }
@@ -237,81 +281,127 @@ export default function Home() {
       body: JSON.stringify({ pid, choice }),
     });
   }
+return (
+  <main style={styles.page}>
+    {/* HEADER */}
+    <header style={styles.header}>
+      <div style={styles.brandWrap}>
+        <img src="/logo.png" alt="Ritual" style={styles.logo} />
+        <div>
+          <h1 style={styles.title}>Ritual Prediction Market</h1>
+          <p style={styles.subtitle}>Collective intelligence, live</p>
+        </div>
+      </div>
 
-  return (
-    <main style={styles.page}>
-  <header style={styles.header}>
-  <div style={styles.brandWrap}>
-    <img src="/logo.png" alt="Ritual" style={styles.logo} />
-    <div>
-      <h1 style={styles.title}>Ritual Prediction Market</h1>
-      <p style={styles.subtitle}>Collective intelligence, live</p>
-    </div>
+     {user && (
+  <div style={styles.userBox}>
+    <span
+      style={styles.email}
+      title={user.username || user.email}
+    >
+      {user.username || user.email}
+    </span>
+    <button onClick={logout} style={styles.logoutBtn}>
+      Logout
+    </button>
   </div>
+)}
 
-  {user && (
-    <div style={styles.userBox}>
-      <span style={styles.email} title={user.email}>
-        {user.email}
-      </span>
-      <button onClick={logout} style={styles.logoutBtn}>
-        Logout
-      </button>
-    </div>
-  )}
-</header>
+    </header>
 
+    {/* AUTH */}
+    {!user && (
+      <AuthModal
+        mode={mode}
+        setMode={setMode}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        username={username}
+        setUsername={setUsername}
+        confirmPassword={confirmPassword}
+        setConfirmPassword={setConfirmPassword}
+        submit={submitAuth}
+        error={error}
+        validationError={validationError}
+        canSubmit={canSubmit}
+      />
+    )}
 
-      {!user && (
-        <AuthModal
-          mode={mode}
-          setMode={setMode}
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          submit={submitAuth}
-          error={error}
-          validationError={validationError}
-          canSubmit={canSubmit}
-        />
-      )}
+    {/* MAIN APP */}
+    {user && (
+      <section style={styles.grid}>
+        {WEEKLY_PREDICTIONS.map((p) => {
+          const v = votes[p.pid] || { yes: 0, no: 0, votes: [] };
+          const myVote = v.votes?.find(vt => vt.userId === user._id)?.choice;
+          const total = v.yes + v.no || 1;
+          const yesPct = Math.round((v.yes / total) * 100);
+          const noPct = 100 - yesPct;
 
-      {user && (
-        <section style={styles.grid}>
-          {WEEKLY_PREDICTIONS.map((p) => {
-            const v = votes[p.pid] || { yes: 0, no: 0 };
-            const total = v.yes + v.no || 1;
-            const yesPct = Math.round((v.yes / total) * 100);
-            const noPct = 100 - yesPct;
+          return (
+            <div key={p.pid} style={styles.card}>
+              <h3 style={styles.question}>{p.question}</h3>
 
-            return (
-              <div key={p.pid} style={styles.card}>
-                <h3 style={styles.question}>{p.question}</h3>
+              <div style={styles.voteRow}>
+                <button
+                  onClick={() => vote(p.pid, "YES")}
+                  style={{
+                    ...styles.yesBtn,
+                    background:
+                      myVote === "YES"
+                        ? "#1f7a4a"
+                        : "rgba(31,122,74,0.35)",
+                    border:
+                      myVote === "YES"
+                        ? "2px solid #34d399"
+                        : "2px solid transparent",
+                  }}
+                >
+                  YES
+                </button>
 
-                <div style={styles.voteRow}>
-                  <button onClick={() => vote(p.pid, "YES")} style={styles.yesBtn}>YES</button>
-                  <button onClick={() => vote(p.pid, "NO")} style={styles.noBtn}>NO</button>
-                </div>
-
-                <div style={styles.bar}>
-                  <div style={{ ...styles.barYes, width: `${yesPct}%` }} />
-                  <div style={{ ...styles.barNo, width: `${noPct}%` }} />
-                </div>
-
-                <div style={styles.meta}>
-                  <span>YES {yesPct}%</span>
-                  <span>NO {noPct}%</span>
-                </div>
+                <button
+                  onClick={() => vote(p.pid, "NO")}
+                  style={{
+                    ...styles.noBtn,
+                    background:
+                      myVote === "NO"
+                        ? "#7a1f1f"
+                        : "rgba(122,31,31,0.35)",
+                    border:
+                      myVote === "NO"
+                        ? "2px solid #f87171"
+                        : "2px solid transparent",
+                  }}
+                >
+                  NO
+                </button>
               </div>
-            );
-          })}
-        </section>
-      )}
 
-      <Toast message={toast} />
-    </main>
-  );
+              <div style={styles.bar}>
+                <div style={{ ...styles.barYes, width: `${yesPct}%` }} />
+                <div style={{ ...styles.barNo, width: `${noPct}%` }} />
+              </div>
+
+              <div style={styles.meta}>
+                <span>YES {yesPct}%</span>
+                <span>NO {noPct}%</span>
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    )}
+
+    <Toast message={toast} />
+
+    <footer style={styles.footer}>
+      Created by <span style={styles.footerName}>Maharshi</span>
+    </footer>
+  </main>
+);
+
 }
 
 /* 🎨 Styles (unchanged background) */
@@ -385,12 +475,24 @@ userBox: {
 },
 
 email: {
-  fontSize: 12,
+  fontSize: 16,
   color: "#9a9a9a",
   maxWidth: 160,
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+},
+footer: {
+  marginTop: 40,
+  textAlign: "center",
+  fontSize: 14,
+  color: "#9a9a9a",
+  opacity: 0.85,
+},
+
+footerName: {
+  color: "#eaeaea",
+  fontWeight: 600,
 },
 
 logoutBtn: {

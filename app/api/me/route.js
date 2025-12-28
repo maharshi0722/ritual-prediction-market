@@ -11,7 +11,10 @@ export async function GET() {
   }
 
   await connectDB();
-  const user = await User.findById(userId).select("email");
+
+  const user = await User.findById(userId).select(
+    "_id email username"
+  );
 
   return NextResponse.json({ user });
 }
