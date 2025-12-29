@@ -12,9 +12,15 @@ export async function GET() {
 
   await connectDB();
 
+  // include credits and lastFaucetClaim so client has authoritative cooldown + balance
   const user = await User.findById(userId).select(
-    "_id email username"
+    "_id email username credits lastFaucetClaim"
   );
 
-  return NextResponse.json({ user });
+  return NextResponse.json({  user: {
+    _id: user._id,
+    username: user.username,
+    credits: user.credits,
+    lastFaucetClaim: user.lastFaucetClaim, // 🔑 REQUIRED
+  }, });
 }

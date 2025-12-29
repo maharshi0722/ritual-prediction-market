@@ -5,8 +5,9 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true }, // hashed
   createdAt: { type: Date, default: Date.now },
   username: { type: String, required: true },
-usernameLower: { type: String, required: true, unique: true },
-
+  usernameLower: { type: String, required: true, unique: true },
+  credits: { type: Number, default: 0 },
+  lastFaucetClaim: { type: Date },
 });
 
 export default mongoose.models.User ||
