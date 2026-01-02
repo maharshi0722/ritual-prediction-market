@@ -4,12 +4,13 @@ import { useEffect, useState, useRef } from "react";
 
 /* 🔒 Static weekly predictions */
 const WEEKLY_PREDICTIONS = [
-  { pid: "1", question: "Will Ritual quietly ship something important this week?" },
-  { pid: "2", question: "Will decentralized intelligence feel more real by the end of this week?" },
-  { pid: "3", question: "Will Infernet prove it can scale beyond expectations this week?" },
-  { pid: "4", question: "Will builders take Ritual infrastructure more seriously after this week?" },
-  { pid: "5", question: "Will this week mark a meaningful step toward autonomous onchain intelligence?" },
+  { pid: "1", question: "Does Ritual feel like it’s quietly building something important?" },
+  { pid: "2", question: "Did you learn something new about Ritual this week?" },
+  { pid: "3", question: "Will Ritual play a foundational role in how AI integrates with blockchains over the next few years?" },
+  { pid: "4", question: "Does the Ritual community feel welcoming to new people?" },
+  { pid: "5", question: "Are you more excited about Ritual now than when you first joined?" },
   { pid: "6", question: "Will Infernet return publicly or enter a new phase of availability in January?" },
+  {pid:"7",question:"Do you believe Ritual is thinking long-term?"},
 ];
 
 /* 🔔 Toast */
@@ -26,6 +27,7 @@ function AuthModal({
   username, setUsername,
   confirmPassword, setConfirmPassword,
   submit, error, validationError, canSubmit,
+  authSubmitting,
 }) {
   return (
     <div style={styles.modalBackdrop}>
@@ -69,17 +71,26 @@ function AuthModal({
 
         {validationError && <p style={styles.error}>{validationError}</p>}
         {error && <p style={styles.error}>{error}</p>}
+<button
+  onClick={submit}
+  disabled={!canSubmit || authSubmitting}
+  style={{
+    ...styles.primaryBtn,
+    opacity: !canSubmit || authSubmitting ? 0.6 : 1,
+    cursor: authSubmitting ? "not-allowed" : "pointer",
+  }}
+>
+  {authSubmitting && <span className="auth-spinner" />}
+  {authSubmitting
+    ? mode === "login"
+      ? "Logging in…"
+      : "Creating account…"
+    : mode === "login"
+    ? "Login"
+    : "Sign up"}
+</button>
 
-        <button
-          onClick={submit}
-          disabled={!canSubmit}
-          style={{
-            ...styles.primaryBtn,
-            opacity: canSubmit ? 1 : 0.5,
-          }}
-        >
-          {mode === "login" ? "Login" : "Sign up"}
-        </button>
+
 
         <button
           onClick={() => setMode(mode === "login" ? "signup" : "login")}
@@ -96,8 +107,13 @@ function AuthModal({
 
 /* ------------------------- Main Component ------------------------- */
 export default function Home() {
+  const [votingPid, setVotingPid] = useState(null);
+const [voting, setVoting] = useState(null);
+// { pid: string, choice: "YES" | "NO" } | null
+
   const [votes, setVotes] = useState({});
   const [user, setUser] = useState(null);
+const [authSubmitting, setAuthSubmitting] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -257,8 +273,13 @@ const [authLoading, setAuthLoading] = useState(true);
 
   const canSubmit = !validationError && email && password;
 
-  async function submitAuth() {
-    setError("");
+async function submitAuth() {
+  if (!canSubmit || authSubmitting) return;
+
+  setError("");
+  setAuthSubmitting(true);
+
+  try {
     const res = await fetch(`/api/auth/${mode}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -270,17 +291,24 @@ const [authLoading, setAuthLoading] = useState(true);
       ),
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      const err = await res.json();
-      return setError(err.error);
+      setError(data.error || "Authentication failed");
+      return;
     }
 
     setToast(mode === "signup" ? "Account created 🎉" : "Logged in ✅");
     await refreshUser();
-    // refresh data for logged-in user
+  } catch {
+    setError("Network error. Try again.");
+  } finally {
+    setAuthSubmitting(false);
+  }
     fetchHistory();
     fetchLeaderboard();
-  }
+}
+
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
@@ -290,25 +318,69 @@ const [authLoading, setAuthLoading] = useState(true);
 
   /* -------------------- Voting -------------------- */
   async function vote(pid, choice) {
-    const res = await fetch("/api/vote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ pid, choice }),
+    if (!user) return;
+    if (votingPid === pid) return;
+
+    setVotingPid(pid);
+  setVoting({ pid, choice });
+    // optimistic update
+    setVotes(prev => {
+      const cur = prev[pid];
+      if (!cur) return prev;
+
+      const existing = cur.votes?.find(v => v.userId === user._id);
+      let yes = cur.yes;
+      let no = cur.no;
+      let votesArr = [...(cur.votes || [])];
+
+      if (!existing) {
+        votesArr.push({ userId: user._id, choice });
+        choice === "YES" ? yes++ : no++;
+      } else if (existing.choice !== choice) {
+        votesArr = votesArr.map(v => {
+          if (v.userId !== user._id) return v;
+          v.choice === "YES" ? yes-- : no--;
+          choice === "YES" ? yes++ : no++;
+          return { ...v, choice };
+        });
+      }
+
+      return {
+        ...prev,
+        [pid]: { ...cur, yes, no, votes: votesArr },
+      };
     });
 
-    const data = await res.json();
-    if (!res.ok) return setToast(data.error || "Vote failed");
+    try {
+      const res = await fetch("/api/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ pid, choice }),
+      });
 
-    if (data.credits !== undefined) {
-      prevCreditsRef.current = user?.credits ?? prevCreditsRef.current;
-      setUser((u) => ({ ...u, credits: data.credits }));
-      setCreditsPop(true);
-      setTimeout(() => setCreditsPop(false), 600);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setToast(data.error || "Vote failed");
+        fetchVotes(); // rollback
+        return;
+      }
+
+      if (data.credits !== undefined) {
+        setUser(u => ({ ...u, credits: data.credits }));
+        setCreditsPop(true);
+        setTimeout(() => setCreditsPop(false), 600);
+      }
+
       fetchHistory();
       fetchLeaderboard();
+    } finally {
+      setVotingPid(null);
+       setVoting(null); 
     }
   }
+
 
   async function removeVote(pid) {
     const res = await fetch("/api/vote", {
@@ -525,6 +597,7 @@ if (!user) {
           error={error}
           validationError={validationError}
           canSubmit={canSubmit}
+            authSubmitting={authSubmitting}
         />
       </div>
 
@@ -593,6 +666,21 @@ if (!user) {
           transform: translateY(-6px);
           box-shadow: 0 12px 30px rgba(0,0,0,0.35);
         }
+.auth-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #000;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
         .view-panel {
           animation: view-fade 260ms ease;
@@ -758,30 +846,48 @@ if (!user) {
                     </div>
 
                     <div style={styles.voteRow}>
-                      <button
-                        onClick={() => vote(p.pid, "YES")}
-                        style={{
-                          ...styles.yesBtn,
-                          background: myVote === "YES"
-                            ? "#1f7a4a"
-                            : "rgba(31,122,74,0.35)",
-                              padding: isMobile ? 16 : 12,
-                        }}
-                      >
-                        YES
-                      </button>
+                  <button
+  disabled={voting?.pid === p.pid}
+  onClick={() => vote(p.pid, "YES")}
+  style={{
+    ...styles.yesBtn,
+    opacity: voting?.pid === p.pid ? 0.6 : 1,
+    background:
+      myVote === "YES"
+        ? "#1f7a4a"
+        : "rgba(31,122,74,0.35)",
+  }}
+>
+  {voting?.pid === p.pid && voting?.choice === "YES" ? (
+    <span className="auth-spinner" />
+  ) : (
+    "YES"
+  )}
+</button>
 
-                      <button
-                        onClick={() => vote(p.pid, "NO")}
-                        style={{
-                          ...styles.noBtn,
-                          background: myVote === "NO"
-                            ? "#7a1f1f"
-                            : "rgba(122,31,31,0.35)",
-                        }}
-                      >
-                        NO
-                      </button>
+
+
+<button
+  disabled={voting?.pid === p.pid}
+  onClick={() => vote(p.pid, "NO")}
+  style={{
+    ...styles.noBtn,
+    opacity: voting?.pid === p.pid ? 0.6 : 1,
+    background:
+      myVote === "NO"
+        ? "#7a1f1f"
+        : "rgba(122,31,31,0.35)",
+  }}
+>
+  {voting?.pid === p.pid && voting?.choice === "NO" ? (
+    <span className="auth-spinner" />
+  ) : (
+    "NO"
+  )}
+</button>
+
+
+
                     </div>
 
                     <div style={styles.removeVoteWrap}>
@@ -858,6 +964,7 @@ if (!user) {
 
 /* ------------------------- Styles ------------------------- */
 const styles = {
+  
   page: {
     minHeight: "100vh",
     background: "radial-gradient(1200px 500px at top, #161616, #0a0a0a)",
