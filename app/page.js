@@ -4,14 +4,18 @@ import { useEffect, useState, useRef } from "react";
 
 /* 🔒 Static weekly predictions */
 const WEEKLY_PREDICTIONS = [
-  { pid: "1", question: "Does Ritual feel like it’s quietly building something important?" },
-  { pid: "2", question: "Did you learn something new about Ritual this week?" },
-  { pid: "3", question: "Will Ritual play a foundational role in how AI integrates with blockchains over the next few years?" },
-  { pid: "4", question: "Does the Ritual community feel welcoming to new people?" },
-  { pid: "5", question: "Are you more excited about Ritual now than when you first joined?" },
-  { pid: "6", question: "Will Infernet return publicly or enter a new phase of availability in January?" },
-  {pid:"7",question:"Do you believe Ritual is thinking long-term?"},
+  { pid: "01", question: "Does Ritual feel like it’s quietly building something important?" },
+  { pid: "02", question: "Does it feel like real progress is happening behind the scenes?" },
+  { pid: "03", question: "Does EVM++ feel like it could unlock new kinds of smart contracts?" },
+  { pid: "04", question: "Do scheduled transactions feel like a real upgrade over keepers?" },
+  { pid: "05", question: "Does Infernet feel like it could become the go-to for verifiable compute?" },
+  { pid: "06", question: "Have you enjoyed hanging out in Ritual events or community chats?" },
+  { pid: "07", question: "Does Ritual feel more builder-led than hype-led?" },
+  { pid: "08", question: "Are you more excited about Ritual now than a few weeks ago?" },
+  { pid: "09", question: "Does Ritual feel underrated by the wider crypto space right now?" },
+
 ];
+
 
 /* 🔔 Toast */
 function Toast({ message }) {
@@ -33,7 +37,7 @@ function AuthModal({
     <div style={styles.modalBackdrop}>
       <div style={styles.modal}>
         <h2>{mode === "login" ? "Welcome back" : "Create account"}</h2>
-        <p style={styles.modalSub}>Ritual Prediction Market</p>
+        <p style={styles.modalSub}>Ritual Market Place</p>
 
         {mode === "signup" && (
           <input
@@ -565,7 +569,7 @@ if (!user) {
         <div style={styles.brandWrap}>
           <img src="/logo.png" alt="Ritual" style={styles.logo} />
           <div>
-            <h1 style={styles.title}>Ritual Prediction Market</h1>
+            <h1 style={styles.title}>Ritual Market Place</h1>
             <p style={styles.subtitle}>Collective intelligence, live</p>
           </div>
         </div>
@@ -712,7 +716,7 @@ if (!user) {
         <div style={styles.brandWrap}>
           <img src="/logo.png" alt="Ritual" style={styles.logo} />
           <div>
-            <h1 style={styles.title}>Ritual Prediction Market</h1>
+            <h1 style={styles.title}>Ritual Market Place</h1>
             <p style={styles.subtitle}>Collective intelligence, live</p>
           </div>
         </div>
