@@ -4,17 +4,16 @@ import { useEffect, useState, useRef } from "react";
 
 /* 🔒 Static weekly predictions */
 const WEEKLY_PREDICTIONS = [
-  { pid: "01", question: "Does Ritual feel like it’s quietly building something important?" },
-  { pid: "02", question: "Does it feel like real progress is happening behind the scenes?" },
-  { pid: "03", question: "Does EVM++ feel like it could unlock new kinds of smart contracts?" },
-  { pid: "04", question: "Do scheduled transactions feel like a real upgrade over keepers?" },
-  { pid: "05", question: "Does Infernet feel like it could become the go-to for verifiable compute?" },
-  { pid: "06", question: "Have you enjoyed hanging out in Ritual events or community chats?" },
-  { pid: "07", question: "Does Ritual feel more builder-led than hype-led?" },
-  { pid: "08", question: "Are you more excited about Ritual now than a few weeks ago?" },
-  { pid: "09", question: "Does Ritual feel underrated by the wider crypto space right now?" },
-
+  { pid: "01", question: "Ritualist stronger than Ritty?", yesLabel: "Yes - Ritualist", noLabel: "No - Ritty" },
+  { pid: "02", question: "Ritty stronger than Ritty Bitty?", yesLabel: "Yes - Ritty", noLabel: "No - Ritty Bitty" },
+  { pid: "03", question: "NPC stronger than Dunce?", yesLabel: "Yes - NPC", noLabel: "No - Dunce" },
+  { pid: "04", question: "Zealot stronger than Mage?", yesLabel: "Yes - Zealot", noLabel: "No - Mage" },
+  { pid: "05", question: "Ritty bitty stronger than Ascendant?", yesLabel: "Yes - Ritty Bitty", noLabel: "No - Ascendant" },
+  { pid: "06", question: "Cursed stronger than Harmonic?", yesLabel: "Yes - Cursed", noLabel: "No - Harmonic" },
+  { pid: "07", question: "Community stronger than Ritualist?", yesLabel: "Yes - Community", noLabel: "No - Ritualist" },
+  
 ];
+
 
 
 /* 🔔 Toast */
@@ -865,7 +864,7 @@ if (!user) {
   {voting?.pid === p.pid && voting?.choice === "YES" ? (
     <span className="auth-spinner" />
   ) : (
-    "YES"
+    p.yesLabel || "YES"
   )}
 </button>
 
@@ -886,7 +885,7 @@ if (!user) {
   {voting?.pid === p.pid && voting?.choice === "NO" ? (
     <span className="auth-spinner" />
   ) : (
-    "NO"
+    p.noLabel || "NO"
   )}
 </button>
 
