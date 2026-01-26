@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db";
 import Suggestion from "../../../../models/suggestion";
-import Prediction from "../../../../models/prediction";
+import Prediction from "../../../../../models/prediction";
 import { getUserId } from "../../../../lib/getUser";
-import { broadcast } from "../../../../lib/sseStore"; // send to SSE clients
+import { broadcast } from "../../../../../../lib/sseStore";
+ // send to SSE clients
 
 // POST /api/suggestions/:id/approve  — only admin/curator should call this
 export async function POST(req, { params }) {
