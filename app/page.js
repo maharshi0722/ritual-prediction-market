@@ -79,7 +79,7 @@ const WEEKLY_PREDICTIONS = [
     pid: "111",
     question: "Who’s writing more valuable content lately?",
     yesLabel: "Maharshi",
-    noLabel: "Henry",
+    noLabel: "Anirudh",
   },
   {
     pid: "112",
