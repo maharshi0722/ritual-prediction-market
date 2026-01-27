@@ -6,6 +6,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const WEEKLY_PREDICTIONS = [
   // 🛡️ Mods (leadership & consistency)
   {
+    pid: "116",
+    question: "Who’s your favorite from the foundation team?",
+    yesLabel: "Josh",
+    noLabel: "Claire",
+  },
+  {
     pid: "101",
     question: "Who’s been the most active mod recently?",
     yesLabel: "Jez",
