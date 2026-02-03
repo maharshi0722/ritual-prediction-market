@@ -5,81 +5,92 @@ import { useEffect, useMemo, useRef, useState } from "react";
 /* -------------------- Static weekly predictions (fallback) -------------------- */
 
 const WEEKLY_PREDICTIONS = [
-  // 🛡️ Moderators
+  // 🧙‍♂️ Ritualist Battles
   {
-   pid: "201",
-  question: "Will this week’s Ritual Academy session be high-signal?",
-  yesLabel: "High signal",
+  pid: "223",
+  question: "Meison vs Cutie Eric — who wins this Radiant Ritualist battle?",
+  yesLabel: "Meison",
+  noLabel: "Cutie Eric",
 },
-    {
-    pid: "202",
-    question: "Bunsdev vs Elif Hilal Kara — who’s your favorite Ritual developer?",
-    yesLabel: "Bunsdev",
-    noLabel: "Elif Hilal Kara",
-  },
-  {
-    pid: "203",
-    question: "Stefan vs Dunken — who’s been more consistent as a moderator?",
-    yesLabel: "Stefan",
-    noLabel: "Dunken",
-  },
+{
+  pid: "211",
+  question: "Moctx vs Joyesh — who wins this Ritualist battle?",
+  yesLabel: "Moctx",
+  noLabel: "Joyesh",
+},
+{
+  pid: "212",
+  question: "Itoshi vs Gurujji — who takes this Ritualist matchup?",
+  yesLabel: "Itoshi",
+  noLabel: "Gurujji",
+},
+{
+  pid: "213",
+  question: "Pixel vs Osargi — who’s the stronger Ritualist?",
+  yesLabel: "Pixel",
+  noLabel: "Osargi",
+},
+{
+  pid: "214",
+  question: "Marcellus vs Oluwasegun — who dominates this Ritualist round?",
+  yesLabel: "Marcellus",
+  noLabel: "Oluwasegun",
+},
 
-  // 🏗️ Builders
-  {
-    pid: "204",
-    question: "Meison vs Maharshi — who’s shipping better builder work?",
-    yesLabel: "Meison",
-    noLabel: "Maharshi",
-  },
-  {
-    
-    pid: "205",
-    question:
-     "Tanoy vs Elijah — who’s the stronger builder right now?",
-    yesLabel: "Tanoy",
-    noLabel: "Elijah",
-  },
+// ⚡ Ritty Battles
+{
+  pid: "215",
+  question: "Maharshi vs Kastew — who wins this Ritty battle?",
+  yesLabel: "Maharshi",
+  noLabel: "Kastew",
+},
+{
+  pid: "216",
+  question: "Harix vs Rajlol — who’s taking this Ritty matchup?",
+  yesLabel: "Harix",
+  noLabel: "Rajlol",
+},
+{
+  pid: "217",
+  question: "Cripson vs Oahid — who comes out on top?",
+  yesLabel: "Cripson",
+  noLabel: "Oahid",
+},
+{
+  pid: "218",
+  question: "Preshy vs JT — who wins this Ritty faceoff?",
+  yesLabel: "Preshy",
+  noLabel: "JT",
+},
+{
+  pid: "219",
+  question: "Tanoy vs Believe — who claims this Ritty round?",
+  yesLabel: "Tanoy",
+  noLabel: "Believe",
+},
 
-  // 😂 Memes
-  {
-    pid: "206",
-    question: "Moctx vs Oahid — who’s dropping better memes?",
-    yesLabel: "Moctx",
-    noLabel: "Oahid",
-  },
+// 🔹 Bitty Battles
+{
+  pid: "220",
+  question: "Rooh vs Palak — who wins this Bitty battle?",
+  yesLabel: "Rooh",
+  noLabel: "Palak",
+},
+{
+  pid: "221",
+  question: "TCmain vs Rahul — who takes this Bitty matchup?",
+  yesLabel: "TCmain",
+  noLabel: "Rahul",
+},
+{
+  pid: "222",
+  question: "Yuta vs Okustu — who dominates this Bitty round?",
+  yesLabel: "Yuta",
+  noLabel: "Okustu",
+},
 
-  // 🎨 Art
-  {
-    pid: "207",
-    question: "Mathson vs Osaragi — who’s producing better art lately?",
-    yesLabel: "Mathson",
-    noLabel: "Osaragi",
-  },
-  {
-    pid: "208",
-    question: "Gill vs Pixel — whose art is stronger overall?",
-    yesLabel: "Gill",
-    noLabel: "Pixel",
-  },
+// ✨ Radiant Ritualist
 
-  // ✍️ Content
-  {
-    pid: "209",
-    question: "Maharshi vs G9D — who’s writing more valuable content?",
-    yesLabel: "Maharshi",
-    noLabel: "G9D",
-  },
-
-  // 💬 Chat
-  {
-    pid: "210",
-    question: "JT vs Cass — who’s more active in chat?",
-    yesLabel: "JT",
-    noLabel: "Cass",
-  },
-
-  // 🧠 Ritual Dev Team (new pid range)
- 
 ];
 
 /* -------------------- Weekly Market Timer Helper -------------------- */
@@ -1115,14 +1126,24 @@ export default function Home() {
   }, [predictionsList, byPid, weeklySet, searchQuery]);
 
   /* ---------- Styles ---------- */
-  const pageStyle = {
-    minHeight: "100vh",
-    background: theme === "dark"
-      ? "linear-gradient(180deg, #0a0a0a 0%, #111 100%)"
-      : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
-    color: theme === "dark" ? "#eaeaea" : "#1a1a1a",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  };
+const pageStyle = {
+  minHeight: "100vh",
+  backgroundImage: `
+    ${theme === "dark"
+      ? "linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9))"
+      : "linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95))"},
+    url("${isMobile ? "null" : "/bg.png"}")
+  `,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+  backgroundAttachment: isMobile ? "scroll" : "fixed", // IMPORTANT for iOS
+  color: theme === "dark" ? "#eaeaea" : "#111",
+  fontFamily:
+    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+};
+
+
 
   const headerStyle = {
     display: "flex",
@@ -1682,6 +1703,18 @@ export default function Home() {
         .card { padding: 16px !important; }
         .question { font-size: 15px !important; }
       }
+
+  @media (max-width: 768px) {
+    main {
+      background-image: ${
+        theme === "dark"
+          ? `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url("/bg2.png")`
+          : `linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95)), url("/bg2.png")`
+      } !important;
+      background-attachment: scroll !important;
+    }
+  }
+
 
       body { background: ${theme === "dark" ? "#0a0a0a" : "#f5f9fb"}; }
     `;
