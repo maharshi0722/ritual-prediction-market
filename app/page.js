@@ -11,6 +11,12 @@ const WEEKLY_PREDICTIONS = [
   question: "Will this week’s Ritual Academy session be high-signal?",
   yesLabel: "High signal",
 },
+ {
+    pid: "199",
+    question: "Who’s your favorite from the foundation team?",
+    yesLabel: "Josh",
+    noLabel: "Elif Hilal Kara",
+  },
     {
     pid: "202",
     question: "Bunsdev vs Elif Hilal Kara — who’s your favorite Ritual developer?",
@@ -1115,14 +1121,24 @@ export default function Home() {
   }, [predictionsList, byPid, weeklySet, searchQuery]);
 
   /* ---------- Styles ---------- */
-  const pageStyle = {
-    minHeight: "100vh",
-    background: theme === "dark"
-      ? "linear-gradient(180deg, #0a0a0a 0%, #111 100%)"
-      : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
-    color: theme === "dark" ? "#eaeaea" : "#1a1a1a",
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-  };
+const pageStyle = {
+  minHeight: "100vh",
+  backgroundImage: `
+    ${theme === "dark"
+      ? "linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9))"
+      : "linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95))"},
+    url("${isMobile ? "null" : "/bg.png"}")
+  `,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundRepeat: "no-repeat",
+  backgroundAttachment: isMobile ? "scroll" : "fixed", // IMPORTANT for iOS
+  color: theme === "dark" ? "#eaeaea" : "#111",
+  fontFamily:
+    "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+};
+
+
 
   const headerStyle = {
     display: "flex",
@@ -1682,6 +1698,18 @@ export default function Home() {
         .card { padding: 16px !important; }
         .question { font-size: 15px !important; }
       }
+
+  @media (max-width: 768px) {
+    main {
+      background-image: ${
+        theme === "dark"
+          ? `linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.9)), url("/bg2.png")`
+          : `linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.95)), url("/bg2.png")`
+      } !important;
+      background-attachment: scroll !important;
+    }
+  }
+
 
       body { background: ${theme === "dark" ? "#0a0a0a" : "#f5f9fb"}; }
     `;
