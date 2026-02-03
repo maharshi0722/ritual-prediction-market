@@ -3,132 +3,150 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 /* -------------------- Static weekly predictions (fallback) -------------------- */
+
 const WEEKLY_PREDICTIONS = [
-  // 🛡️ Mods (leadership & consistency)
+  // 🛡️ Moderators
   {
-    pid: "116",
-    question: "Who’s your favorite from the foundation team?",
-    yesLabel: "Josh",
-    noLabel: "Claire",
+   pid: "201",
+  question: "Will this week’s Ritual Academy session be high-signal?",
+  yesLabel: "High signal",
+},
+    {
+    pid: "202",
+    question: "Bunsdev vs Elif Hilal Kara — who’s your favorite Ritual developer?",
+    yesLabel: "Bunsdev",
+    noLabel: "Elif Hilal Kara",
   },
   {
-    pid: "101",
-    question: "Who’s been the most active mod recently?",
-    yesLabel: "Jez",
-    noLabel: "Stefan",
-  },
-  {
-    pid: "102",
-    question: "Which mod is showing up more consistently these days?",
-    yesLabel: "Dunken",
-    noLabel: "Flash",
-  },
-
-  // 🎯 Event Manager (planning & execution)
-  {
-    pid: "103",
-    question: "Who’s running events better right now planning + execution?",
-    yesLabel: "Hinata",
-    noLabel: "Kash",
+    pid: "203",
+    question: "Stefan vs Dunken — who’s been more consistent as a moderator?",
+    yesLabel: "Stefan",
+    noLabel: "Dunken",
   },
 
-  // 😂 Memes (quality & consistency)
+  // 🏗️ Builders
   {
-    pid: "104",
-    question: "Who’s delivering better memes lately?",
-    yesLabel: "Moctx",
-    noLabel: "Kundan",
-  },
-
-  // 🏗️ Builders (shipping & impact)
-  {
-    pid: "105",
-    question: "Who’s been shipping stronger builder work recently?",
+    pid: "204",
+    question: "Meison vs Maharshi — who’s shipping better builder work?",
     yesLabel: "Meison",
+    noLabel: "Maharshi",
+  },
+  {
+    
+    pid: "205",
+    question:
+     "Tanoy vs Elijah — who’s the stronger builder right now?",
+    yesLabel: "Tanoy",
     noLabel: "Elijah",
   },
+
+  // 😂 Memes
   {
-    pid: "106",
-    question: "If you had to pick one top builder today, who takes it?",
-    yesLabel: "Maharshi",
-    noLabel: "Tanoy",
-  },
-  {
-    pid: "107",
-    question: "Who’s making the bigger builder impact right now?",
-    yesLabel: "Rajlol",
-    noLabel: "Cripson",
+    pid: "206",
+    question: "Moctx vs Oahid — who’s dropping better memes?",
+    yesLabel: "Moctx",
+    noLabel: "Oahid",
   },
 
-  // 🎨 Art (style & output)
+  // 🎨 Art
   {
-    pid: "108",
-    question: "Who’s been dropping the better art lately?",
-    yesLabel: "Osaragi",
-    noLabel: "Pixelsect",
+    pid: "207",
+    question: "Mathson vs Osaragi — who’s producing better art lately?",
+    yesLabel: "Mathson",
+    noLabel: "Osaragi",
   },
   {
-    pid: "109",
-    question: "Whose art has been stronger recently output + style?",
+    pid: "208",
+    question: "Gill vs Pixel — whose art is stronger overall?",
     yesLabel: "Gill",
-    noLabel: "Willow",
-  },
-  {
-    pid: "110",
-    question: "Who’s the better artist right now (overall vibe + quality)?",
-    yesLabel: "Alpha",
-    noLabel: "Eren Daddy",
+    noLabel: "Pixel",
   },
 
-  // ✍️ Content (clarity & value)
+  // ✍️ Content
   {
-    pid: "111",
-    question: "Who’s writing more valuable content lately?",
+    pid: "209",
+    question: "Maharshi vs G9D — who’s writing more valuable content?",
     yesLabel: "Maharshi",
-    noLabel: "Anirudh",
-  },
-  {
-    pid: "112",
-    question: "Who’s the stronger content writer these days?",
-    yesLabel: "Lubu",
     noLabel: "G9D",
   },
 
-  // 💬 Chat activity (presence & participation)
+  // 💬 Chat
   {
-    pid: "113",
-    question: "Who’s been more active in chat recently?",
-    yesLabel: "Cass",
-    noLabel: "Willow",
-  },
-  {
-    pid: "114",
-    question: "Who’s more present in chat these days messages?",
+    pid: "210",
+    question: "JT vs Cass — who’s more active in chat?",
     yesLabel: "JT",
-    noLabel: "Marcellus",
+    noLabel: "Cass",
   },
 
-  // 🎮 Gamer (skill & wins)
-  {
-    pid: "115",
-    question: "Who’s the better gamer right now?",
-    yesLabel: "Lina",
-    noLabel: "Sahil",
-  },
+  // 🧠 Ritual Dev Team (new pid range)
+ 
 ];
 
+/* -------------------- Weekly Market Timer Helper -------------------- */
+function getWeeklyMarketTimer() {
+  const now = new Date();
+  const currentDay = now.getDay();
 
+  let daysUntilSaturday = (7 - currentDay + 7) % 7;
+  if (daysUntilSaturday === 0 && now.getHours() >= 23 && now.getMinutes() >= 59) {
+    daysUntilSaturday = 7;
+  }
 
-/* -------------------- Small UI components -------------------- */
-function Toast({ message }) {
+  const saturday = new Date(now);
+  saturday.setDate(now.getDate() + daysUntilSaturday);
+  saturday.setHours(23, 59, 59, 999);
+
+  const remainingMs = Math.max(0, saturday.getTime() - now.getTime());
+  const closed = remainingMs <= 0;
+
+  return { remainingMs, closed };
+}
+
+function formatMarketTimer(ms) {
+  if (ms <= 0) return "Closed";
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h ${minutes}m`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+  return `${minutes}m ${seconds}s`;
+}
+
+/* -------------------- Toast Component -------------------- */
+function Toast({ message, theme }) {
   if (!message) return null;
   return (
-    <div className="toast" style={styles.toast}>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 24,
+        left: "50%",
+        transform: "translateX(-50%)",
+        padding: "14px 28px",
+        background: theme === "dark" ? "#1a1a1a" : "#fff",
+        color: theme === "dark" ? "#fff" : "#111",
+        borderRadius: 16,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+        fontWeight: 600,
+        fontSize: 14,
+        zIndex: 9999,
+        animation: "slideUp 0.3s ease-out",
+        border: theme === "dark" ? "1px solid #333" : "1px solid #e0e0e0",
+      }}
+    >
       {message}
     </div>
   );
 }
 
+/* -------------------- Auth Modal Component -------------------- */
 function AuthModal({
   visible,
   mode,
@@ -169,53 +187,90 @@ function AuthModal({
     }
   };
 
+  const inputStyle = {
+    width: "100%",
+    padding: "14px 16px",
+    borderRadius: 12,
+    border: theme === "dark" ? "1px solid #333" : "1px solid #e0e0e0",
+    background: theme === "dark" ? "#1a1a1a" : "#f8f9fa",
+    color: theme === "dark" ? "#fff" : "#111",
+    fontSize: 15,
+    outline: "none",
+    transition: "all 0.2s ease",
+    boxSizing: "border-box",
+  };
+
   return (
-    <div style={styles.modalBackdrop} role="dialog" aria-modal="true" aria-label={mode === "login" ? "Login" : "Sign up"}>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 16,
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div
-        className="modal"
         style={{
-          ...styles.modal,
-          width: isMobile ? "94%" : 420,
-          padding: isMobile ? 14 : 20,
-          background: theme === "dark" ? "#0f1113" : "#fff",
+          width: isMobile ? "100%" : 440,
+          maxWidth: "100%",
+          padding: isMobile ? 20 : 32,
+          borderRadius: 24,
+          background: theme === "dark" ? "#111" : "#fff",
           color: theme === "dark" ? "#eaeaea" : "#111",
+          boxShadow: "0 24px 48px rgba(0,0,0,0.2)",
+          animation: "fadeIn 0.2s ease-out",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 20 }}>{mode === "login" ? "Welcome back" : "Create account"}</h2>
-            <p style={{ margin: "6px 0 0", color: theme === "dark" ? "#9a9a9a" : "#666", fontSize: 13 }}>
+            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>
+              {mode === "login" ? "Welcome back" : "Create account"}
+            </h2>
+            <p style={{ margin: "8px 0 0", color: theme === "dark" ? "#888" : "#666", fontSize: 14 }}>
               {mode === "login" ? "Sign in to access your account" : "Join Ritual — submit and track predictions"}
             </p>
           </div>
-
           <button
             onClick={onClose}
-            aria-label="Close authentication dialog"
             style={{
-              background: "transparent",
+              background: theme === "dark" ? "#222" : "#f0f0f0",
               border: "none",
-              color: theme === "dark" ? "#9a9a9a" : "#666",
+              borderRadius: 10,
+              width: 36,
+              height: 36,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               cursor: "pointer",
-              fontSize: 16,
-              padding: 6,
+              color: theme === "dark" ? "#888" : "#666",
+              fontSize: 18,
             }}
           >
             ✕
           </button>
         </div>
 
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, background: theme === "dark" ? "#1a1a1a" : "#f0f0f0", padding: 4, borderRadius: 12 }}>
           <button
             onClick={() => setMode("login")}
             style={{
               flex: 1,
-              padding: "8px 10px",
+              padding: "12px 16px",
               borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.06)",
-              background: mode === "login" ? (theme === "dark" ? "#15221b" : "#eaf6ec") : "transparent",
-              fontWeight: 700,
+              border: "none",
+              background: mode === "login" ? (theme === "dark" ? "#333" : "#fff") : "transparent",
+              color: mode === "login" ? (theme === "dark" ? "#fff" : "#111") : (theme === "dark" ? "#888" : "#666"),
+              fontWeight: 600,
               cursor: "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: mode === "login" ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
             }}
           >
             Login
@@ -224,69 +279,57 @@ function AuthModal({
             onClick={() => setMode("signup")}
             style={{
               flex: 1,
-              padding: "8px 10px",
+              padding: "12px 16px",
               borderRadius: 10,
-              border: "1px solid rgba(0,0,0,0.06)",
-              background: mode === "signup" ? (theme === "dark" ? "#15221b" : "#eaf6ec") : "transparent",
-              fontWeight: 700,
+              border: "none",
+              background: mode === "signup" ? (theme === "dark" ? "#333" : "#fff") : "transparent",
+              color: mode === "signup" ? (theme === "dark" ? "#fff" : "#111") : (theme === "dark" ? "#888" : "#666"),
+              fontWeight: 600,
               cursor: "pointer",
+              transition: "all 0.2s ease",
+              boxShadow: mode === "signup" ? "0 2px 8px rgba(0,0,0,0.1)" : "none",
             }}
           >
             Sign up
           </button>
         </div>
 
-        <form
-          style={{ marginTop: 14 }}
-          onKeyDown={handleKey}
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-        >
-          <div style={{ display: "grid", gap: 10 }}>
+        <form onKeyDown={handleKey} onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <div style={{ display: "grid", gap: 16 }}>
             {mode === "signup" && (
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
-                <span style={{ color: theme === "dark" ? "#cfcfcf" : "#444" }}>Username</span>
+              <div>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 14, fontWeight: 500, color: theme === "dark" ? "#ccc" : "#444" }}>
+                  Username
+                </label>
                 <input
                   type="text"
                   autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Choose a username"
-                  style={{
-                    ...styles.input,
-                    padding: "10px 12px",
-                    borderRadius: 10,
-                    background: theme === "dark" ? "#0b0d0f" : "#fff",
-                    color: theme === "dark" ? "#fff" : "#111",
-                    border: theme === "dark" ? "1px solid #202327" : "1px solid rgba(0,0,0,0.08)",
-                  }}
+                  style={inputStyle}
                 />
-              </label>
+              </div>
             )}
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
-              <span style={{ color: theme === "dark" ? "#cfcfcf" : "#444" }}>Email</span>
+            <div>
+              <label style={{ display: "block", marginBottom: 8, fontSize: 14, fontWeight: 500, color: theme === "dark" ? "#ccc" : "#444" }}>
+                Email
+              </label>
               <input
                 type="email"
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                style={{
-                  ...styles.input,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  background: theme === "dark" ? "#0b0d0f" : "#fff",
-                  color: theme === "dark" ? "#fff" : "#111",
-                  border: theme === "dark" ? "1px solid #202327" : "1px solid rgba(0,0,0,0.08)",
-                }}
+                style={inputStyle}
               />
-            </label>
+            </div>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
-              <span style={{ color: theme === "dark" ? "#cfcfcf" : "#444" }}>Password</span>
+            <div>
+              <label style={{ display: "block", marginBottom: 8, fontSize: 14, fontWeight: 500, color: theme === "dark" ? "#ccc" : "#444" }}>
+                Password
+              </label>
               <div style={{ position: "relative" }}>
                 <input
                   type={showPass ? "text" : "password"}
@@ -294,40 +337,34 @@ function AuthModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  style={{
-                    ...styles.input,
-                    padding: "10px 38px 10px 12px",
-                    borderRadius: 10,
-                    background: theme === "dark" ? "#0b0d0f" : "#fff",
-                    color: theme === "dark" ? "#fff" : "#111",
-                    border: theme === "dark" ? "1px solid #202327" : "1px solid rgba(0,0,0,0.08)",
-                  }}
+                  style={{ ...inputStyle, paddingRight: 60 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPass((s) => !s)}
-                  aria-label={showPass ? "Hide password" : "Show password"}
                   style={{
                     position: "absolute",
-                    right: 8,
+                    right: 12,
                     top: "50%",
                     transform: "translateY(-50%)",
-                    background: "transparent",
+                    background: "none",
                     border: "none",
-                    color: "#9a9a9a",
+                    color: theme === "dark" ? "#888" : "#666",
                     cursor: "pointer",
-                    padding: 6,
                     fontSize: 13,
+                    fontWeight: 500,
                   }}
                 >
                   {showPass ? "Hide" : "Show"}
                 </button>
               </div>
-            </label>
+            </div>
 
             {mode === "signup" && (
-              <label style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
-                <span style={{ color: theme === "dark" ? "#cfcfcf" : "#444" }}>Confirm Password</span>
+              <div>
+                <label style={{ display: "block", marginBottom: 8, fontSize: 14, fontWeight: 500, color: theme === "dark" ? "#ccc" : "#444" }}>
+                  Confirm Password
+                </label>
                 <div style={{ position: "relative" }}>
                   <input
                     type={showConfirm ? "text" : "password"}
@@ -335,95 +372,62 @@ function AuthModal({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Repeat your password"
-                    style={{
-                      ...styles.input,
-                      padding: "10px 38px 10px 12px",
-                      borderRadius: 10,
-                      background: theme === "dark" ? "#0b0d0f" : "#fff",
-                      color: theme === "dark" ? "#fff" : "#111",
-                      border: theme === "dark" ? "1px solid #202327" : "1px solid rgba(0,0,0,0.08)",
-                    }}
+                    style={{ ...inputStyle, paddingRight: 60 }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm((s) => !s)}
-                    aria-label={showConfirm ? "Hide confirm" : "Show confirm"}
                     style={{
                       position: "absolute",
-                      right: 8,
+                      right: 12,
                       top: "50%",
                       transform: "translateY(-50%)",
-                      background: "transparent",
+                      background: "none",
                       border: "none",
-                      color: "#9a9a9a",
+                      color: theme === "dark" ? "#888" : "#666",
                       cursor: "pointer",
-                      padding: 6,
                       fontSize: 13,
+                      fontWeight: 500,
                     }}
                   >
                     {showConfirm ? "Hide" : "Show"}
                   </button>
                 </div>
-              </label>
+              </div>
             )}
 
-            <div>
-              {validationError && <div style={{ ...styles.error, marginTop: 6 }}>{validationError}</div>}
-              {error && <div style={{ ...styles.error, marginTop: 6 }}>{error}</div>}
-            </div>
+            {(validationError || error) && (
+              <div style={{
+                padding: "12px 16px",
+                background: theme === "dark" ? "rgba(220,38,38,0.15)" : "#fef2f2",
+                border: "1px solid rgba(220,38,38,0.3)",
+                borderRadius: 12,
+                color: "#dc2626",
+                fontSize: 14,
+              }}>
+                {validationError || error}
+              </div>
+            )}
 
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={!canSubmit || authSubmitting}
-                style={{
-                  ...styles.primaryBtn,
-                  flex: 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  opacity: !canSubmit || authSubmitting ? 0.7 : 1,
-                }}
-              >
-                {authSubmitting ? (
-                  <>
-                    <span
-                      className="auth-spinner"
-                      style={{
-                        width: 14,
-                        height: 14,
-                        border: "2px solid rgba(255,255,255,0.9)",
-                        borderRightColor: "transparent",
-                        borderRadius: "50%",
-                      }}
-                    />
-                    {mode === "login" ? "Logging in…" : "Creating account…"}
-                  </>
-                ) : mode === "login" ? (
-                  "Login"
-                ) : (
-                  "Sign up"
-                )}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setMode(mode === "login" ? "signup" : "login")}
-                style={{
-                  ...styles.switchBtn,
-                  padding: "10px 12px",
-                  borderRadius: 10,
-                  flex: 1,
-                  textAlign: "center",
-                }}
-              >
-                {mode === "login" ? "Create account" : "Back to login"}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={!canSubmit || authSubmitting}
+              style={{
+                width: "100%",
+                padding: "16px",
+                borderRadius: 12,
+                border: "none",
+                background: canSubmit && !authSubmitting ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "#ccc",
+                color: "#fff",
+                fontSize: 16,
+                fontWeight: 700,
+                cursor: canSubmit && !authSubmitting ? "pointer" : "not-allowed",
+                transition: "all 0.2s ease",
+                marginTop: 8,
+              }}
+            >
+              {authSubmitting ? (mode === "login" ? "Logging in…" : "Creating account…") : (mode === "login" ? "Login" : "Sign up")}
+            </button>
           </div>
         </form>
       </div>
@@ -431,33 +435,57 @@ function AuthModal({
   );
 }
 
-/* -------------------- Main component -------------------- */
+/* -------------------- Market Timer Badge -------------------- */
+function MarketTimerBadge({ theme }) {
+  const [timer, setTimer] = useState(getWeeklyMarketTimer());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimer(getWeeklyMarketTimer());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isUrgent = timer.remainingMs < 3600000;
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 16px",
+        borderRadius: 24,
+        background: timer.closed
+          ? (theme === "dark" ? "#333" : "#e5e5e5")
+          : isUrgent
+          ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+          : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+        color: timer.closed ? (theme === "dark" ? "#888" : "#666") : "#fff",
+        fontSize: 13,
+        fontWeight: 600,
+        boxShadow: timer.closed ? "none" : "0 4px 12px rgba(16,185,129,0.3)",
+      }}
+    >
+      <span style={{ fontSize: 16 }}>{timer.closed ? "🔒" : "⏱️"}</span>
+      <span>{timer.closed ? "Market Closed" : `Ends in ${formatMarketTimer(timer.remainingMs)}`}</span>
+    </div>
+  );
+}
+
+/* -------------------- Main Component -------------------- */
 export default function Home() {
-  // theme (light/dark)
-  const [theme, setTheme] = useState("dark");
-
-  // authoritative server predictions (from /api/predictions)
+  const [theme, setTheme] = useState("light");
   const [serverPredictions, setServerPredictions] = useState([]);
-  // client-local predictions (client-only adds), keyed by pid
   const [localPredictions, setLocalPredictions] = useState({});
-
-  // merged predictions displayed in UI
   const [predictionsList, setPredictionsList] = useState(() => WEEKLY_PREDICTIONS.map((p) => ({ ...p })));
-
-  // Polymarket feed state
   const [polyMarkets, setPolyMarkets] = useState([]);
   const [polyLoading, setPolyLoading] = useState(false);
   const [polyError, setPolyError] = useState("");
-
-  // loading & auth states
   const [searchQuery, setSearchQuery] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
   const [user, setUser] = useState(null);
-
-  // votes keyed by pid (from server)
   const [votes, setVotes] = useState({});
-
-  // add prediction modal & fields
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPid, setNewPid] = useState("");
   const [newQuestion, setNewQuestion] = useState("");
@@ -465,8 +493,6 @@ export default function Home() {
   const [newNoLabel, setNewNoLabel] = useState("");
   const [adding, setAdding] = useState(false);
   const [addingError, setAddingError] = useState("");
-
-  // auth form
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
@@ -476,74 +502,66 @@ export default function Home() {
   const [authSubmitting, setAuthSubmitting] = useState(false);
   const [validationError, setValidationError] = useState("");
   const [error, setError] = useState("");
-
-  // UI states
   const [toast, setToast] = useState("");
   const prevCreditsRef = useRef(0);
   const [nextClaimAt, setNextClaimAt] = useState(null);
   const [now, setNow] = useState(Date.now());
   const [faucetPulse, setFaucetPulse] = useState(false);
-  const [creditsPop, setCreditsPop] = useState(false);
-
-
   const [votingPid, setVotingPid] = useState(null);
   const [voting, setVoting] = useState(null);
-
   const [view, setView] = useState("market");
   const [history, setHistory] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [polySort, setPolySort] = useState("trending");
 
-  /* ---------- theme persistence ---------- */
+  /* ---------- Theme persistence ---------- */
   useEffect(() => {
     try {
       const t = localStorage.getItem("theme");
       if (t === "light" || t === "dark") setTheme(t);
     } catch {}
   }, []);
+
   useEffect(() => {
     try {
       localStorage.setItem("theme", theme);
     } catch {}
   }, [theme]);
 
-  /* ---------- responsive ---------- */
+  /* ---------- Responsive ---------- */
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 720);
+    const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  /* ---------- toast auto-hide ---------- */
+  /* ---------- Toast auto-hide ---------- */
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(""), 2600);
+    const t = setTimeout(() => setToast(""), 3000);
     return () => clearTimeout(t);
   }, [toast]);
 
-  /* ---------- recompute merged predictionsList whenever server/local change ---------- */
+  /* ---------- Merge predictions ---------- */
   useEffect(() => {
     const serverMap = Object.fromEntries(serverPredictions.map((p) => [p.pid, p]));
     const serverOrder = serverPredictions.map((p) => p.pid);
-
     const seen = new Set();
     const merged = [];
 
-   for (const w of WEEKLY_PREDICTIONS) {
-  const s = serverMap[w.pid];
-
-  merged.push({
-    pid: w.pid,
-    question: (s?.question && s.question.trim()) ? s.question.trim() : w.question,
-    yesLabel: pickLabel(s?.yesLabel, w.yesLabel, "YES"),
-    noLabel: pickLabel(s?.noLabel, w.noLabel, "NO"),
-    source: s ? "server" : "weekly",
-  });
-
-  seen.add(w.pid);
-}
-
+    for (const w of WEEKLY_PREDICTIONS) {
+      const s = serverMap[w.pid];
+      merged.push({
+        pid: w.pid,
+        question: s?.question?.trim() || w.question,
+        yesLabel: pickLabel(s?.yesLabel, w.yesLabel, "YES"),
+        noLabel: pickLabel(s?.noLabel, w.noLabel, "NO"),
+        source: s ? "server" : "weekly",
+      });
+      seen.add(w.pid);
+    }
 
     for (const pid of serverOrder) {
       if (seen.has(pid)) continue;
@@ -554,8 +572,7 @@ export default function Home() {
     }
 
     for (const lp of Object.values(localPredictions)) {
-      if (!lp || !lp.pid) continue;
-      if (seen.has(lp.pid)) continue;
+      if (!lp?.pid || seen.has(lp.pid)) continue;
       merged.push({ ...lp, source: "client" });
       seen.add(lp.pid);
     }
@@ -563,7 +580,7 @@ export default function Home() {
     setPredictionsList(merged);
   }, [serverPredictions, localPredictions]);
 
-  /* ---------- initial data + SSE ---------- */
+  /* ---------- Initial data + SSE ---------- */
   useEffect(() => {
     refreshUser();
     fetchVotes();
@@ -574,19 +591,19 @@ export default function Home() {
       es.onmessage = (e) => {
         try {
           const data = JSON.parse(e.data);
-          if (!data || !data.pid) return;
+          if (!data?.pid) return;
 
           setVotes((prev) => ({ ...prev, [data.pid]: { ...(prev[data.pid] || {}), ...data } }));
 
           setServerPredictions((prev) => {
             const idx = prev.findIndex((p) => p.pid === data.pid);
-          const serverItem = {
-  pid: data.pid,
-  question: typeof data.question === "string" && data.question.trim() ? data.question.trim() : "",
-  yesLabel: typeof data.yesLabel === "string" ? data.yesLabel : "",
-  noLabel: typeof data.noLabel === "string" ? data.noLabel : "",
-  source: "server",
-};
+            const serverItem = {
+              pid: data.pid,
+              question: typeof data.question === "string" && data.question.trim() ? data.question.trim() : "",
+              yesLabel: typeof data.yesLabel === "string" ? data.yesLabel : "",
+              noLabel: typeof data.noLabel === "string" ? data.noLabel : "",
+              source: "server",
+            };
 
             if (idx >= 0) {
               const copy = [...prev];
@@ -597,83 +614,55 @@ export default function Home() {
           });
 
           setLocalPredictions((prev) => {
-            if (!prev || !prev[data.pid]) return prev;
+            if (!prev?.[data.pid]) return prev;
             const copy = { ...prev };
             delete copy[data.pid];
             return copy;
           });
         } catch (err) {
-          console.warn("SSE parse/upsert error", err);
+          console.warn("SSE parse error", err);
         }
       };
-      es.onerror = () => {
-        try {
-          es.close();
-        } catch {}
-      };
+      es.onerror = () => es?.close();
     } catch (err) {
       console.warn("SSE init failed", err);
     }
-    return () => es && es.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => es?.close();
   }, []);
 
-const [polySort, setPolySort] = useState("trending"); // trending | new | volume
-
-async function fetchPolymarket(q = "", sort = "trending") {
-  setPolyLoading(true);
-  setPolyError("");
-
-  try {
-    const res = await fetch(
-      `/api/polymarket?limit=24&sort=${encodeURIComponent(sort)}&q=${encodeURIComponent(q)}`,
-      { cache: "no-store" }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setPolyError(data?.error || "Failed to load Polymarket markets");
+  /* ---------- Polymarket ---------- */
+  async function fetchPolymarket(q = "", sort = "trending") {
+    setPolyLoading(true);
+    setPolyError("");
+    try {
+      const res = await fetch(`/api/polymarket?limit=24&sort=${encodeURIComponent(sort)}&q=${encodeURIComponent(q)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) {
+        setPolyError(data?.error || "Failed to load Polymarket markets");
+        setPolyMarkets([]);
+        return;
+      }
+      let markets = [];
+      if (data?.sections && typeof data.sections === "object") {
+        const key = sort === "new" ? "latest" : sort;
+        if (Array.isArray(data.sections[key])) markets = data.sections[key];
+      }
+      if (!markets.length && Array.isArray(data?.markets)) markets = data.markets;
+      setPolyMarkets(markets);
+    } catch {
+      setPolyError("Network error loading Polymarket markets");
       setPolyMarkets([]);
-      return;
+    } finally {
+      setPolyLoading(false);
     }
-
-    // Prefer backend-provided sections when available.
-    // Map UI "new" to backend "latest".
-    let markets = [];
-    if (data?.sections && typeof data.sections === "object") {
-      const key = sort === "new" ? "latest" : sort;
-      if (Array.isArray(data.sections[key])) markets = data.sections[key];
-    }
-
-    // Fallback to the older `markets` array if sections missing / empty
-    if (!markets.length && Array.isArray(data?.markets)) markets = data.markets;
-
-    setPolyMarkets(markets);
-  } catch {
-    setPolyError("Network error loading Polymarket markets");
-    setPolyMarkets([]);
-  } finally {
-    setPolyLoading(false);
   }
-}
 
-
-
-// ✅ auto refresh while on polymarket tab
-useEffect(() => {
-  if (view !== "polymarket") return;
-
-  fetchPolymarket(searchQuery, polySort);
-
-  const t = setInterval(() => {
+  useEffect(() => {
+    if (view !== "polymarket") return;
     fetchPolymarket(searchQuery, polySort);
-  }, 15000);
-
-  return () => clearInterval(t);
-}, [view, polySort, searchQuery]);
-
-
+    const t = setInterval(() => fetchPolymarket(searchQuery, polySort), 15000);
+    return () => clearInterval(t);
+  }, [view, polySort, searchQuery]);
 
   function formatCompact(n) {
     try {
@@ -683,7 +672,7 @@ useEffect(() => {
     }
   }
 
-  /* -------------------- Data fetchers -------------------- */
+  /* ---------- Data fetchers ---------- */
   async function fetchVotes() {
     try {
       const res = await fetch("/api/predictions");
@@ -694,23 +683,21 @@ useEffect(() => {
       const serverMap = {};
       const serverOrder = [];
       data.forEach((p) => {
-        if (!p || !p.pid) return;
+        if (!p?.pid) return;
         const q = typeof p.question === "string" && p.question.trim() ? p.question : "";
-     serverMap[p.pid] = { pid: p.pid, question: q, yesLabel: p.yesLabel ?? "", noLabel: p.noLabel ?? "" };
-   serverOrder.push(p.pid);
+        serverMap[p.pid] = { pid: p.pid, question: q, yesLabel: p.yesLabel ?? "", noLabel: p.noLabel ?? "" };
+        serverOrder.push(p.pid);
       });
 
-      const serverList = [];
-      for (const pid of serverOrder) {
+      const serverList = serverOrder.map((pid) => {
         const s = serverMap[pid];
-        if (!s) continue;
-        serverList.push({ pid: s.pid, question: s.question, yesLabel: s.yesLabel, noLabel: s.noLabel, source: "server" });
-      }
+        return s ? { pid: s.pid, question: s.question, yesLabel: s.yesLabel, noLabel: s.noLabel, source: "server" } : null;
+      }).filter(Boolean);
       setServerPredictions(serverList);
 
       const map = {};
       data.forEach((p) => {
-        if (!p || !p.pid) return;
+        if (!p?.pid) return;
         map[p.pid] = { pid: p.pid, yes: p.yes ?? 0, no: p.no ?? 0, votes: p.votes ?? [] };
       });
       setVotes((prev) => ({ ...prev, ...map }));
@@ -747,12 +734,7 @@ useEffect(() => {
 
       fetchHistory();
       fetchLeaderboard();
-
-      try {
-        await fetchMySuggestions();
-      } catch (err) {
-        console.warn("fetchMySuggestions failed:", err);
-      }
+      fetchMySuggestions().catch(() => {});
     } finally {
       setAuthLoading(false);
     }
@@ -789,10 +771,7 @@ useEffect(() => {
   async function fetchHistory() {
     try {
       const res = await fetch("/api/history", { credentials: "include" });
-      if (!res.ok) {
-        setHistory([]);
-        return;
-      }
+      if (!res.ok) { setHistory([]); return; }
       const d = await res.json();
       setHistory(d.history || []);
     } catch (err) {
@@ -804,10 +783,7 @@ useEffect(() => {
   async function fetchLeaderboard() {
     try {
       const res = await fetch("/api/leaderboard");
-      if (!res.ok) {
-        setLeaderboard([]);
-        return;
-      }
+      if (!res.ok) { setLeaderboard([]); return; }
       const d = await res.json();
       setLeaderboard(d.leaderboard || []);
     } catch (err) {
@@ -816,12 +792,9 @@ useEffect(() => {
     }
   }
 
-  /* -------------------- Auth helpers -------------------- */
+  /* ---------- Auth helpers ---------- */
   useEffect(() => {
-    if (!email) {
-      setValidationError("");
-      return;
-    }
+    if (!email) { setValidationError(""); return; }
     if (!email.includes("@")) return setValidationError("Email must contain @");
     if (password && password.length > 0 && password.length < 6) return setValidationError("Password must be at least 6 characters");
     if (mode === "signup" && password !== confirmPassword) return setValidationError("Passwords do not match");
@@ -842,10 +815,7 @@ useEffect(() => {
         body: JSON.stringify(mode === "signup" ? { email, password, confirmPassword, username } : { email, password }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Authentication failed");
-        return;
-      }
+      if (!res.ok) { setError(data.error || "Authentication failed"); return; }
       setToast(mode === "signup" ? "Account created 🎉" : "Logged in ✅");
       setShowAuthModal(false);
       await refreshUser();
@@ -871,7 +841,7 @@ useEffect(() => {
     }
   }
 
-  /* -------------------- Faucet helpers -------------------- */
+  /* ---------- Faucet helpers ---------- */
   useEffect(() => {
     if (!nextClaimAt) return;
     setNow(Date.now());
@@ -889,61 +859,45 @@ useEffect(() => {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
 
-function pickLabel(serverLabel, weeklyLabel, fallback) {
-  const s = (serverLabel ?? "").toString().trim();
-  if (!s) return weeklyLabel || fallback;
-
-  const up = s.toUpperCase();
-  if (up === "YES" || up === "NO") return weeklyLabel || fallback;
-
-  return s;
-}
-
-async function claimFaucet() {
-  if (!user) {
-    setToast("Login to claim faucet");
-    setShowAuthModal(true);
-    setMode("login");
-    return;
+  function pickLabel(serverLabel, weeklyLabel, fallback) {
+    const s = (serverLabel ?? "").toString().trim();
+    if (!s) return weeklyLabel || fallback;
+    const up = s.toUpperCase();
+    if (up === "YES" || up === "NO") return weeklyLabel || fallback;
+    return s;
   }
 
-  try {
-    const res = await fetch("/api/faucet", { method: "POST", credentials: "include" });
-    const data = await res.json();
-
-    // If already claimed, server should return remainingMs
-    if (!res.ok) {
-      if (data?.remainingMs) setNextClaimAt(Date.now() + Number(data.remainingMs));
-      setToast(data?.error || "Already claimed");
+  async function claimFaucet() {
+    if (!user) {
+      setToast("Login to claim faucet");
+      setShowAuthModal(true);
+      setMode("login");
       return;
     }
-
-    // ✅ Update credits UI
-    prevCreditsRef.current = user?.credits ?? prevCreditsRef.current;
-    setUser((u) => ({ ...u, credits: data.credits }));
-
-    // ✅ Start the 24h timer instantly (no need to wait for /api/me)
-    const next = Date.now() + 24 * 60 * 60 * 1000;
-    setNextClaimAt(next);
-
-    // optional: keep your animations
-    setFaucetPulse(true);
-    setToast("+10 credits claimed");
-    setTimeout(() => setFaucetPulse(false), 900);
-
-    fetchHistory();
-    fetchLeaderboard();
-
-    // optional: refreshUser to sync server timestamps (not required for timer)
-    // refreshUser();
-  } catch (err) {
-    console.error(err);
-    setToast("Network error");
+    try {
+      const res = await fetch("/api/faucet", { method: "POST", credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) {
+        if (data?.remainingMs) setNextClaimAt(Date.now() + Number(data.remainingMs));
+        setToast(data?.error || "Already claimed");
+        return;
+      }
+      prevCreditsRef.current = user?.credits ?? prevCreditsRef.current;
+      setUser((u) => ({ ...u, credits: data.credits }));
+      const next = Date.now() + 24 * 60 * 60 * 1000;
+      setNextClaimAt(next);
+      setFaucetPulse(true);
+      setToast("+10 credits claimed 🎉");
+      setTimeout(() => setFaucetPulse(false), 900);
+      fetchHistory();
+      fetchLeaderboard();
+    } catch (err) {
+      console.error(err);
+      setToast("Network error");
+    }
   }
-}
 
-
-  /* -------------------- Voting (Ritual credits) -------------------- */
+  /* ---------- Voting ---------- */
   async function vote(pid, choice) {
     if (!user) {
       setToast("Login to vote");
@@ -955,7 +909,6 @@ async function claimFaucet() {
     setVotingPid(pid);
     setVoting({ pid, choice });
 
-    // optimistic update
     setVotes((prev) => {
       const cur = prev[pid] || { yes: 0, no: 0, votes: [] };
       const existing = cur.votes?.find((v) => v.userId === user._id);
@@ -974,7 +927,6 @@ async function claimFaucet() {
         if (choice === "YES") yes++;
         else no++;
       }
-
       return { ...prev, [pid]: { ...cur, yes, no, votes: votesArr } };
     });
 
@@ -1018,10 +970,7 @@ async function claimFaucet() {
         body: JSON.stringify({ pid, remove: true }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setToast("Failed to remove vote");
-        return;
-      }
+      if (!res.ok) { setToast("Failed to remove vote"); return; }
       if (data.credits !== undefined) setUser((u) => ({ ...u, credits: data.credits }));
       fetchHistory();
       fetchLeaderboard();
@@ -1031,7 +980,7 @@ async function claimFaucet() {
     }
   }
 
-  /* -------------------- Add prediction (server-backed suggestion) -------------------- */
+  /* ---------- Add prediction ---------- */
   function openAddModal() {
     setNewPid("");
     setNewQuestion("");
@@ -1042,13 +991,9 @@ async function claimFaucet() {
   }
 
   async function submitNewPrediction() {
-    if (!newQuestion.trim()) {
-      setAddingError("Question is required");
-      return;
-    }
+    if (!newQuestion.trim()) { setAddingError("Question is required"); return; }
     setAdding(true);
     setAddingError("");
-
     try {
       const res = await fetch("/api/suggestions", {
         method: "POST",
@@ -1061,9 +1006,7 @@ async function claimFaucet() {
           noLabel: newNoLabel.trim() || undefined,
         }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         if (res.status === 401) {
           setShowAuthModal(true);
@@ -1074,8 +1017,7 @@ async function claimFaucet() {
         setAddingError(data.error || "Failed to submit suggestion");
         return;
       }
-
-      setToast("Suggestion submitted ✅ waiting for approval");
+      setToast("Suggestion submitted ✅");
       setShowAddModal(false);
 
       const sug = data.suggestion || {};
@@ -1100,26 +1042,7 @@ async function claimFaucet() {
       setAdding(false);
     }
   }
-
-  /* -------------------- Panels & helpers (rendering) -------------------- */
-  function pageStyle(theme) {
-    return {
-      ...styles.page,
-      background: theme === "dark" ? "radial-gradient(1200px 500px at top, #161616, #0a0a0a)" : "#f5f9fb",
-      color: theme === "dark" ? "#eaeaea" : "#111",
-    };
-  }
-
-  function cardStyle(theme) {
-    return {
-      ...styles.card,
-      background: theme === "dark" ? "rgba(255,255,255,0.03)" : "#fff",
-      border: theme === "dark" ? "1px solid rgba(255,255,255,0.04)" : "1px solid #e6eaf0",
-      color: theme === "dark" ? "#eaeaea" : "#111",
-    };
-  }
-
-  function renderHistory() {
+    function renderHistory() {
     if (!history.length) return <div style={styles.empty}>No history yet.</div>;
     return (
       <div style={styles.historyList}>
@@ -1142,7 +1065,6 @@ async function claimFaucet() {
       </div>
     );
   }
-
   function renderLeaderboard() {
     if (!leaderboard.length) return <div style={styles.empty}>No leaderboard data.</div>;
     return (
@@ -1165,33 +1087,7 @@ async function claimFaucet() {
     );
   }
 
-  function renderMyBetsPanel() {
-    const myBets = Object.values(votes).filter((v) => v.votes?.some((x) => x.userId === user?._id));
-    if (!myBets.length) return <div style={styles.myBetsEmpty}>No bets yet. Vote in the market to see them here.</div>;
-
-    return (
-      <div style={styles.myBetsList}>
-        {myBets.map((p) => {
-          const myVote = p.votes.find((v) => v.userId === user?._id)?.choice;
-
-          // votes don’t carry question; lookup from predictionsList (weekly/server/local)
-          const meta = predictionsList.find((x) => x.pid === p.pid);
-          const questionText = meta?.question || `Prediction ${p.pid}`;
-
-          return (
-            <div key={p.pid} style={styles.myBetItem}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: theme === "dark" ? "#fff" : "#111" }}>
-                {p.pid} · {questionText}
-              </div>
-              <div style={{ fontSize: 13, color: "#9a9a9a" }}>{myVote}</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  /* ---------- prepare list for rendering ---------- */
+  /* ---------- Prepare list for rendering ---------- */
   const normalizePid = (pid) => (/^\d+$/.test(String(pid)) ? String(pid).padStart(2, "0") : String(pid));
   const weeklySet = useMemo(() => new Set(WEEKLY_PREDICTIONS.map((w) => w.pid)), []);
   const byPid = useMemo(() => Object.fromEntries(predictionsList.map((p) => [p.pid, p])), [predictionsList]);
@@ -1203,324 +1099,341 @@ async function claimFaucet() {
     for (const p of predictionsList) {
       const pid = String(p.pid);
       const norm = normalizePid(pid);
-
       if (weeklySet.has(norm) && pid !== norm) continue;
-
       const canonical = byPid[norm] || p;
       const question = canonical.question ? String(canonical.question).trim() : "";
       if (!question) continue;
       if (canonical.source !== "client" && /^prediction\s*\d+$/i.test(question)) continue;
-
       if (seen.has(norm)) continue;
       seen.add(norm);
       visible.push(canonical);
     }
 
     if (!searchQuery) return visible;
-
     const q = searchQuery.toLowerCase();
     return visible.filter((p) => (((p.question || "") + " " + (p.yesLabel || "") + " " + (p.noLabel || "")).toLowerCase().includes(q)));
   }, [predictionsList, byPid, weeklySet, searchQuery]);
 
-  /* ---------- loading UI ---------- */
+  /* ---------- Styles ---------- */
+  const pageStyle = {
+    minHeight: "100vh",
+    background: theme === "dark"
+      ? "linear-gradient(180deg, #0a0a0a 0%, #111 100%)"
+      : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+    color: theme === "dark" ? "#eaeaea" : "#1a1a1a",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  };
+
+  const headerStyle = {
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
+    justifyContent: "space-between",
+    alignItems: isMobile ? "stretch" : "center",
+    padding: isMobile ? "16px" : "20px 32px",
+    borderBottom: theme === "dark" ? "1px solid #222" : "1px solid #e0e0e0",
+    background: theme === "dark" ? "rgba(10,10,10,0.95)" : "rgba(255,255,255,0.95)",
+    backdropFilter: "blur(12px)",
+    position: "sticky",
+    top: 0,
+    zIndex: 100,
+    gap: isMobile ? 16 : 0,
+  };
+
+  const cardStyle = {
+    background: theme === "dark" ? "#1a1a1a" : "#fff",
+    border: theme === "dark" ? "1px solid #2a2a2a" : "1px solid #e5e7eb",
+    borderRadius: 20,
+    padding: 24,
+    transition: "all 0.3s ease",
+    boxShadow: theme === "dark" ? "0 4px 24px rgba(0,0,0,0.3)" : "0 4px 24px rgba(0,0,0,0.06)",
+  };
+
+  const buttonBaseStyle = {
+    border: "none",
+    borderRadius: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontSize: 14,
+  };
+
+  const primaryButtonStyle = {
+    ...buttonBaseStyle,
+    background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+    color: "#fff",
+    padding: "12px 20px",
+    boxShadow: "0 4px 12px rgba(16,185,129,0.3)",
+  };
+
+  const secondaryButtonStyle = {
+    ...buttonBaseStyle,
+    background: theme === "dark" ? "#2a2a2a" : "#f3f4f6",
+    color: theme === "dark" ? "#fff" : "#374151",
+    padding: "10px 16px",
+  };
+
+  const tabButtonStyle = (isActive) => ({
+    ...buttonBaseStyle,
+    background: isActive ? (theme === "dark" ? "#333" : "#e5e7eb") : "transparent",
+    color: isActive ? (theme === "dark" ? "#fff" : "#111") : (theme === "dark" ? "#888" : "#6b7280"),
+    padding: "10px 16px",
+  });
+
+  const voteButtonStyle = (isActive, type) => ({
+    flex: 1,
+    padding: "16px 20px",
+    borderRadius: 14,
+    border: "none",
+    fontWeight: 700,
+    fontSize: 16,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    background: isActive
+      ? (type === "yes" ? "#10b981" : "#ef4444")
+      : (theme === "dark"
+        ? (type === "yes" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)")
+        : (type === "yes" ? "#ecfdf5" : "#fef2f2")),
+    color: isActive
+      ? "#fff"
+      : (type === "yes"
+        ? (theme === "dark" ? "#34d399" : "#059669")
+        : (theme === "dark" ? "#f87171" : "#dc2626")),
+    boxShadow: isActive ? `0 4px 12px ${type === "yes" ? "rgba(16,185,129,0.4)" : "rgba(239,68,68,0.4)"}` : "none",
+  });
+
+  const inputStyle = {
+    width: "100%",
+    padding: "14px 16px",
+    borderRadius: 12,
+    border: theme === "dark" ? "1px solid #333" : "1px solid #e0e0e0",
+    background: theme === "dark" ? "#1a1a1a" : "#f8f9fa",
+    color: theme === "dark" ? "#fff" : "#111",
+    fontSize: 15,
+    outline: "none",
+    boxSizing: "border-box",
+    marginTop: 8,
+  };
+
+  /* ---------- Loading UI ---------- */
   if (authLoading) {
     return (
-      <main style={pageStyle(theme)}>
-        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", color: theme === "dark" ? "#9a9a9a" : "#444" }}>
-          Loading…
+      <main style={pageStyle}>
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              width: 48,
+              height: 48,
+              border: `3px solid ${theme === "dark" ? "#333" : "#e0e0e0"}`,
+              borderTopColor: "#10b981",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px",
+            }} />
+            <p style={{ color: theme === "dark" ? "#888" : "#666" }}>Loading…</p>
+          </div>
         </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </main>
     );
   }
 
-  /* ---------- UI (main) ---------- */
+  /* ---------- Main UI ---------- */
   return (
-    <main style={pageStyle(theme)}>
-      <style>{commonCss(theme)}</style>
+    <main style={pageStyle}>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        .card:hover { transform: translateY(-4px); box-shadow: ${theme === "dark" ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 32px rgba(0,0,0,0.1)"}; }
+        .vote-btn:hover { transform: scale(1.02); }
+        .vote-btn:active { transform: scale(0.98); }
+        input:focus { border-color: #10b981 !important; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+      `}</style>
 
-      <header style={{ ...styles.header, flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", gap: isMobile ? 12 : 8 }}>
-        <div style={styles.brandWrap}>
-          <img src="/logo.png" alt="Ritual" style={styles.logo} />
+      {/* Header */}
+      <header style={headerStyle}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <img src="/logo.png" alt="Ritual" style={{ width: 44, height: 44, borderRadius: 12 }} />
           <div>
-            <h1 style={{ margin: 0, fontSize: 20, color: theme === "dark" ? "#eaeaea" : "#111" }}>Ritual Market Place</h1>
-            <p style={{ margin: 0, fontSize: 12, color: theme === "dark" ? "#9a9a9a" : "#666" }}>Collective intelligence, live</p>
+            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: theme === "dark" ? "#fff" : "#111" }}>
+              Ritual Market
+            </h1>
+            <p style={{ margin: 0, fontSize: 13, color: theme === "dark" ? "#888" : "#666" }}>
+              Collective intelligence, live
+            </p>
           </div>
         </div>
 
-        <div style={{ ...styles.rightControls, width: isMobile ? "100%" : "auto", justifyContent: isMobile ? "space-between" : "flex-end", gap: 8 }} className="right-controls">
-          <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={() => setView("market")} style={{ ...styles.tabBtn, ...(view === "market" ? styles.tabActive : {}), color: theme === "dark" ? "#eaeaea" : "#111" }}>
-              Market
-            </button>
-            <button onClick={() => { setView("history"); fetchHistory(); }} style={{ ...styles.tabBtn, ...(view === "history" ? styles.tabActive : {}), color: theme === "dark" ? "#eaeaea" : "#111" }}>
-              History
-            </button>
-            <button onClick={() => { setView("leaderboard"); fetchLeaderboard(); }} style={{ ...styles.tabBtn, ...(view === "leaderboard" ? styles.tabActive : {}), color: theme === "dark" ? "#eaeaea" : "#111" }}>
-              Leaderboard
-            </button>
-            <button onClick={() => { setView("polymarket"); fetchPolymarket(searchQuery,polySort ); }} style={{ ...styles.tabBtn, ...(view === "polymarket" ? styles.tabActive : {}), color: theme === "dark" ? "#eaeaea" : "#111" }}>
-              Polymarket
-            </button>
-
-          
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: 12, alignItems: isMobile ? "stretch" : "center" }}>
+          <div style={{ display: "flex", gap: 4, background: theme === "dark" ? "#1a1a1a" : "#f3f4f6", padding: 4, borderRadius: 14, flexWrap: "wrap" }}>
+            {["market", "polymarket", "history", "leaderboard"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setView(tab);
+                  if (tab === "history") fetchHistory();
+                  if (tab === "leaderboard") fetchLeaderboard();
+                  if (tab === "polymarket") fetchPolymarket(searchQuery, polySort);
+                }}
+                style={tabButtonStyle(view === tab)}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
           </div>
 
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-            <button onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} style={styles.secondaryBtn}>
-              {theme === "dark" ? "Light" : "Dark"}
+            <button onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))} style={secondaryButtonStyle}>
+              {theme === "dark" ? "☀️" : "🌙"}
             </button>
 
-            <button onClick={openAddModal} style={styles.secondaryBtn}>Add prediction</button>
+            <button onClick={openAddModal} style={secondaryButtonStyle}>
+              + Add
+            </button>
 
             <button
               onClick={claimFaucet}
               disabled={remainingMs > 0}
-              className={`faucet-btn ${faucetPulse ? "pulse" : ""}`}
-              style={{ ...styles.faucetBtn, opacity: remainingMs > 0 ? 0.6 : 1, padding: isMobile ? "10px" : "6px 10px" }}
+              style={{
+                ...primaryButtonStyle,
+                opacity: remainingMs > 0 ? 0.6 : 1,
+                animation: faucetPulse ? "pulse 0.3s ease" : "none",
+              }}
             >
-              {remainingMs > 0 ? formatTime(remainingMs) : "+10 Faucet"}
+              {remainingMs > 0 ? formatTime(remainingMs) : "+10 💧"}
             </button>
 
             {user ? (
               <>
-                <div style={{ fontSize: 13, color: theme === "dark" ? "#cfcfcf" : "#444" }}>
-                  Hi, <strong style={{ color: theme === "dark" ? "#fff" : "#111" }}>{user.username}</strong>
-                </div>
-                <button onClick={logout} style={styles.logoutBtn}>Logout</button>
+                <span style={{ fontSize: 14, color: theme === "dark" ? "#ccc" : "#444" }}>
+                  {user.username} · <strong style={{ color: "#10b981" }}>{user.credits ?? 0}</strong>
+                </span>
+                <button onClick={logout} style={{ ...secondaryButtonStyle, color: "#ef4444" }}>
+                  Logout
+                </button>
               </>
             ) : (
-              <button onClick={() => { setShowAuthModal(true); setMode("login"); }} style={{ ...styles.primaryBtn, padding: "8px 12px", fontSize: 13 }}>
-                Login / Sign up
+              <button onClick={() => { setShowAuthModal(true); setMode("login"); }} style={primaryButtonStyle}>
+                Login
               </button>
             )}
           </div>
         </div>
       </header>
 
-      <section style={styles.container}>
-        {/* Optional: show "My Bets" in market view */}
+      {/* Main Content */}
+      <section style={{ padding: isMobile ? 16 : 32, maxWidth: 1400, margin: "0 auto" }}>
+        {/* Market View */}
         {view === "market" && (
-          <>
-
-            <div className="view-panel">
-              <div className="grid" style={{ ...styles.grid, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))" }}>
-                {combined.map((p) => {
-                  const v = votes[p.pid] || { yes: p.yes ?? 0, no: p.no ?? 0, votes: p.votes ?? [] };
-                  const myVote = v.votes?.find((vt) => vt.userId === user?._id)?.choice;
-                  const total = Math.max(1, (v.yes || 0) + (v.no || 0));
-                  const yesPct = Math.round(((v.yes || 0) / total) * 100);
-                  const noPct = 100 - yesPct;
-
-                  const questionText =
-                    p.question && String(p.question).trim()
-                      ? String(p.question).trim()
-                      : WEEKLY_PREDICTIONS.find((w) => w.pid === p.pid)?.question || `Prediction ${p.pid}`;
-
-                  return (
-                    <div key={p.pid} style={cardStyle(theme)} className="card">
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div style={styles.questionWrap}>
-                          <h3 className="question" style={{ ...styles.question, color: theme === "dark" ? "#fff" : "#111" }}>
-                            {questionText}
-                          </h3>
-                      {p.source === "client" && p.pending && (
-  <div style={{ fontSize: 11, color: "#9a9a9a", marginTop: 6 }}>
-    Pending approval
-  </div>
-)}
-
-{p.source === "client" && !p.pending && (
-  <div style={{ fontSize: 11, color: "#9a9a9a", marginTop: 6 }}>
-    Local
-  </div>
-)}
-  </div>
-                        <div style={{ fontSize: 12, color: theme === "dark" ? "#bfbfbf" : "#666" }}>{null}</div>
-                      </div>
-
-                      <div style={styles.voteRow} className="vote-row">
-                        <button
-                          className="vote-btn"
-                          disabled={voting?.pid === p.pid}
-                          onClick={() => vote(p.pid, "YES")}
-                          style={{
-                            ...styles.yesBtn,
-                            opacity: voting?.pid === p.pid ? 0.6 : 1,
-                            background: myVote === "YES" ? "#1f7a4a" : theme === "dark" ? "rgba(31,122,74,0.18)" : "#e6f3e9",
-                            color: theme === "dark" ? "#fff" : "#0b4d22",
-                          }}
-                        >
-                          {p.yesLabel || "YES"}
-                        </button>
-
-                        <button
-                          className="vote-btn"
-                          disabled={voting?.pid === p.pid}
-                          onClick={() => vote(p.pid, "NO")}
-                          style={{
-                            ...styles.noBtn,
-                            opacity: voting?.pid === p.pid ? 0.6 : 1,
-                            background: myVote === "NO" ? "#7a1f1f" : theme === "dark" ? "rgba(122,31,31,0.12)" : "#fdecec",
-                            color: theme === "dark" ? "#fff" : "#500000",
-                          }}
-                        >
-                          {p.noLabel || "NO"}
-                        </button>
-                      </div>
-
-                      <div style={styles.removeVoteWrap}>
-                        {myVote && <button onClick={() => removeVote(p.pid)} style={styles.removeVote}>Remove vote</button>}
-                      </div>
-
-                      <div className="bar" style={{ ...styles.bar, background: theme === "dark" ? "#111" : "#f1f5f9" }}>
-                        <div className="bar-yes" style={{ ...styles.barYes, width: `${yesPct}%` }} />
-                        <div className="bar-no" style={{ ...styles.barNo, width: `${noPct}%` }} />
-                      </div>
-
-                      <div style={styles.meta}>
-                        <span style={{ color: theme === "dark" ? "#cfe9d7" : "#0b4d22" }}>YES {yesPct}%</span>
-                        <span style={{ color: theme === "dark" ? "#f4cfcf" : "#5b1f1f" }}>NO {noPct}%</span>
-                      </div>
-                    </div>
-                  );
-                })}
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>Weekly Predictions</h2>
+                <p style={{ margin: "8px 0 0", color: theme === "dark" ? "#888" : "#666" }}>
+                  Vote on this week's community predictions
+                </p>
               </div>
+              <MarketTimerBadge theme={theme} />
             </div>
-          </>
-        )}
 
-        {/* Polymarket view: read Polymarket prices, vote with Ritual credits */}
-        {view === "polymarket" && (
-          <div className="view-panel">
-              <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-  </div>
-  <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap" }}>
-  <button
-    onClick={() => setPolySort("trending")}
-    style={{ ...styles.secondaryBtn, ...(polySort === "trending" ? styles.tabActive : {}) }}
-  >
-    Trending
-  </button>
-
-  <button
-    onClick={() => setPolySort("new")}
-    style={{ ...styles.secondaryBtn, ...(polySort === "new" ? styles.tabActive : {}) }}
-  >
-    Newest
-  </button>
-
-  <button
-    onClick={() => setPolySort("volume")}
-    style={{ ...styles.secondaryBtn, ...(polySort === "volume" ? styles.tabActive : {}) }}
-  >
-    Volume
-  </button>
-</div>
-
-            <h2 style={styles.sectionTitle}>Polymarket feed</h2>
-            {polyLoading && <div style={styles.empty}>Loading markets…</div>}
-            {polyError && <div style={styles.error}>{polyError}</div>}
-
-            <div className="grid" style={{ ...styles.grid, gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(320px, 1fr))" }}>
-              {(polyMarkets || []).map((m) => {
-                // ✅ Ritual-only pid for Polymarket market
-                const ritualPid = `poly-${m.id}`;
-
-                const v = votes[ritualPid] || { yes: 0, no: 0, votes: [] };
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(360px, 1fr))",
+              gap: 24,
+            }}>
+              {combined.map((p) => {
+                const v = votes[p.pid] || { yes: 0, no: 0, votes: [] };
                 const myVote = v.votes?.find((vt) => vt.userId === user?._id)?.choice;
-
                 const total = Math.max(1, (v.yes || 0) + (v.no || 0));
-                const ritualYesPct = Math.round(((v.yes || 0) / total) * 100);
-                const ritualNoPct = 100 - ritualYesPct;
-
-                const outcomes = Array.isArray(m.outcomes) ? m.outcomes : [];
-                const yes = outcomes.find((o) => (o.name || "").toLowerCase().includes("yes")) || outcomes[0];
-                const no = outcomes.find((o) => (o.name || "").toLowerCase().includes("no")) || outcomes[1];
-                const yesPrice = yes?.price != null ? Math.round(Number(yes.price) * 100) : null;
-                const noPrice = no?.price != null ? Math.round(Number(no.price) * 100) : null;
+                const yesPct = Math.round(((v.yes || 0) / total) * 100);
+                const noPct = 100 - yesPct;
+                const questionText = p.question?.trim() || WEEKLY_PREDICTIONS.find((w) => w.pid === p.pid)?.question || `Prediction ${p.pid}`;
 
                 return (
-                  <div key={m.id} style={cardStyle(theme)} className="card">
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ flex: 1 }}>
-                        <h3 className="question" style={{ ...styles.question, color: theme === "dark" ? "#fff" : "#111" }}>
-                          {m.title}
-                        </h3>
+                  <div key={p.pid} style={cardStyle} className="card">
+                    <div style={{ marginBottom: 20 }}>
+                      <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, lineHeight: 1.4, color: theme === "dark" ? "#fff" : "#111" }}>
+                        {questionText}
+                      </h3>
+                      {p.source === "client" && p.pending && (
+                        <span style={{
+                          display: "inline-block",
+                          marginTop: 8,
+                          padding: "4px 10px",
+                          borderRadius: 8,
+                          background: theme === "dark" ? "#333" : "#fef3c7",
+                          color: theme === "dark" ? "#fcd34d" : "#92400e",
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }}>
+                          ⏳ Pending approval
+                        </span>
+                      )}
+                    </div>
 
-                        <div style={{ marginTop: 6, fontSize: 12, color: theme === "dark" ? "#9a9a9a" : "#666" }}>
-                        </div>
+                    <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                      <button
+                        className="vote-btn"
+                        disabled={voting?.pid === p.pid}
+                        onClick={() => vote(p.pid, "YES")}
+                        style={voteButtonStyle(myVote === "YES", "yes")}
+                      >
+                        {p.yesLabel || "YES"}
+                      </button>
+                      <button
+                        className="vote-btn"
+                        disabled={voting?.pid === p.pid}
+                        onClick={() => vote(p.pid, "NO")}
+                        style={voteButtonStyle(myVote === "NO", "no")}
+                      >
+                        {p.noLabel || "NO"}
+                      </button>
+                    </div>
 
-                        <div style={{ marginTop: 6, fontSize: 12, color: theme === "dark" ? "#9a9a9a" : "#666" }}>
-                          Vol: {m.volume != null ? formatCompact(m.volume) : "—"} · Liq: {m.liquidity != null ? formatCompact(m.liquidity) : "—"}
-                        </div>
-
-                        <div style={{ marginTop: 10, fontSize: 12, color: theme === "dark" ? "#9a9a9a" : "#666" }}>
-                        </div>
+                    {myVote && (
+                      <div style={{ display: "flex", justifyContent: "center" }}>
+                      <button
+                        onClick={() => removeVote(p.pid)}
+                       className="flex items-center justify-center"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: theme === "dark" ? "#888" : "#6b7280",
+                          fontSize: 13,
+                          cursor: "pointer",
+                          marginBottom: 16,
+                          textDecoration: "underline",
+                        }}
+                      >
+                        Remove vote
+                      </button>
+                      </div>
+                    )}
+                             <div style={styles.meta}>
+                        <span style={{ color: theme === "dark" ? "#cfe9d7" : "#0b4d22" }}> {yesPct}%</span>
+                        <span style={{ color: theme === "dark" ? "#f4cfcf" : "#5b1f1f" }}>{noPct}%</span>
                       </div>
 
-                      {m.url ? (
-                        <a
-                          href={m.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            fontSize: 12,
-                            color: theme === "dark" ? "#9a9a9a" : "#666",
-                            textDecoration: "none",
-                            whiteSpace: "nowrap",
-                            marginTop: 2,
-                          }}
-                        >
-                          Open ↗
-                        </a>
-                      ) : null}
+                    <div style={{
+                      height: 8,
+                      borderRadius: 4,
+                      background: theme === "dark" ? "#333" : "#e5e7eb",
+                      overflow: "hidden",
+                      display: "flex",
+                    }}>
+                      <div style={{
+                        width: `${yesPct}%`,
+                        background: "linear-gradient(90deg, #10b981, #34d399)",
+                        transition: "width 0.5s ease",
+                      }} />
+                      <div style={{
+                        width: `${noPct}%`,
+                        background: "linear-gradient(90deg, #ef4444, #f87171)",
+                        transition: "width 0.5s ease",
+                      }} />
                     </div>
 
-                    {/* ✅ Ritual voting buttons on Polymarket cards */}
-                    <div style={styles.voteRow} className="vote-row">
-                      <button
-                        className="vote-btn"
-                        disabled={voting?.pid === ritualPid}
-                        onClick={() => vote(ritualPid, "YES")}
-                        style={{
-                          ...styles.yesBtn,
-                          opacity: voting?.pid === ritualPid ? 0.6 : 1,
-                          background: myVote === "YES" ? "#1f7a4a" : theme === "dark" ? "rgba(31,122,74,0.18)" : "#e6f3e9",
-                          color: theme === "dark" ? "#fff" : "#0b4d22",
-                        }}
-                      >
-                        YES 
-                      </button>
-
-                      <button
-                        className="vote-btn"
-                        disabled={voting?.pid === ritualPid}
-                        onClick={() => vote(ritualPid, "NO")}
-                        style={{
-                          ...styles.noBtn,
-                          opacity: voting?.pid === ritualPid ? 0.6 : 1,
-                          background: myVote === "NO" ? "#7a1f1f" : theme === "dark" ? "rgba(122,31,31,0.12)" : "#fdecec",
-                          color: theme === "dark" ? "#fff" : "#500000",
-                        }}
-                      >
-                        NO 
-                      </button>
-                    </div>
-
-                    <div style={styles.removeVoteWrap}>
-                      {myVote && <button onClick={() => removeVote(ritualPid)} style={styles.removeVote}>Remove vote</button>}
-                    </div>
-
-                    {/* ✅ Ritual vote bar */}
-                    <div className="bar" style={{ ...styles.bar, background: theme === "dark" ? "#111" : "#f1f5f9" }}>
-                      <div className="bar-yes" style={{ ...styles.barYes, width: `${ritualYesPct}%` }} />
-                      <div className="bar-no" style={{ ...styles.barNo, width: `${ritualNoPct}%` }} />
-                    </div>
-
-                    <div style={styles.meta}>
-                      <span style={{ color: theme === "dark" ? "#cfe9d7" : "#0b4d22" }}> YES {ritualYesPct}%</span>
-                      <span style={{ color: theme === "dark" ? "#f4cfcf" : "#5b1f1f" }}> NO {ritualNoPct}%</span>
-                    </div>
                   </div>
                 );
               })}
@@ -1528,191 +1441,325 @@ async function claimFaucet() {
           </div>
         )}
 
-        {view === "history" && (
-          <div className="view-panel">
-            <h2 style={styles.sectionTitle}>Your activity</h2>
-            <p style={styles.sectionSub}>Recent faucet claims, votes and refunds</p>
-            {renderHistory()}
-          </div>
-        )}
+        {/* Polymarket View */}
+        {view === "polymarket" && (
+          <div>
+            <div style={{ marginBottom: 24 }}>
+              <h2 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>Polymarket Feed</h2>
+              <p style={{ margin: "8px 0 0", color: theme === "dark" ? "#888" : "#666" }}>
+                Real-time prediction markets from Polymarket
+              </p>
+            </div>
 
-        {view === "leaderboard" && (
-          <div className="view-panel">
-            <h2 style={styles.sectionTitle}>Leaderboard</h2>
-            <p style={styles.sectionSub}>Top contributors by votes</p>
-            {renderLeaderboard()}
-          </div>
-        )}
-      </section>
+            <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+              {["trending", "new", "volume"].map((sort) => (
+                <button
+                  key={sort}
+                  onClick={() => setPolySort(sort)}
+                  style={tabButtonStyle(polySort === sort)}
+                >
+                  {sort.charAt(0).toUpperCase() + sort.slice(1)}
+                </button>
+              ))}
+            </div>
 
-      {/* Add prediction modal */}
-      {showAddModal && (
-        <div style={styles.modalBackdrop}>
-          <div style={{ ...styles.modal, maxWidth: 520, background: theme === "dark" ? "#121212" : "#fff", color: theme === "dark" ? "#eaeaea" : "#111" }}>
-            <h3 style={{ margin: 0 }}>Add a prediction</h3>
-            <p style={{ marginTop: 8, color: theme === "dark" ? "#9a9a9a" : "#666" }}>
-              Provide a unique id (optional) and a question. This submits a suggestion to the server; it will appear in Market after approval.
-            </p>
+            {polyLoading && (
+              <div style={{ textAlign: "center", padding: 48 }}>
+                <div style={{
+                  width: 40,
+                  height: 40,
+                  border: `3px solid ${theme === "dark" ? "#333" : "#e0e0e0"}`,
+                  borderTopColor: "#10b981",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite",
+                  margin: "0 auto",
+                }} />
+              </div>
+            )}
 
-            <input placeholder="Unique id (optional)" value={newPid} onChange={(e) => setNewPid(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
-            <input placeholder="Question text" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
-            <input placeholder="Yes label (optional)" value={newYesLabel} onChange={(e) => setNewYesLabel(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
-            <input placeholder="No label (optional)" value={newNoLabel} onChange={(e) => setNewNoLabel(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
+            {polyError && (
+              <div style={{
+                padding: 16,
+                background: theme === "dark" ? "rgba(239,68,68,0.1)" : "#fef2f2",
+                border: "1px solid rgba(239,68,68,0.3)",
+                borderRadius: 12,
+                color: "#ef4444",
+              }}>
+                {polyError}
+              </div>
+            )}
 
-            {addingError && <div style={styles.error}>{addingError}</div>}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(380px, 1fr))",
+              gap: 24,
+            }}>
+              {(polyMarkets || []).map((m) => {
+                const ritualPid = `poly-${m.id}`;
+                const v = votes[ritualPid] || { yes: 0, no: 0, votes: [] };
+                const myVote = v.votes?.find((vt) => vt.userId === user?._id)?.choice;
+                const total = Math.max(1, (v.yes || 0) + (v.no || 0));
+                const ritualYesPct = Math.round(((v.yes || 0) / total) * 100);
+                const ritualNoPct = 100 - ritualYesPct;
 
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <button onClick={submitNewPrediction} disabled={adding} style={styles.primaryBtn}>
-                {adding ? "Submitting…" : "Submit suggestion"}
-              </button>
-              <button onClick={() => setShowAddModal(false)} style={styles.removeVote}>Cancel</button>
+                return (
+                  <div key={m.id} style={cardStyle} className="card">
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, marginBottom: 16 }}>
+                      <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, lineHeight: 1.4, flex: 1, color: theme === "dark" ? "#fff" : "#111" }}>
+                        {m.title}
+                      </h3>
+                      {m.url && (
+                        <a
+                          href={m.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            color: "#10b981",
+                            fontSize: 13,
+                            textDecoration: "none",
+                            fontWeight: 600,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          Open ↗
+                        </a>
+                      )}
+                    </div>
+
+                    <div style={{ fontSize: 13, color: theme === "dark" ? "#888" : "#666", marginBottom: 16 }}>
+                      Vol: {m.volume != null ? formatCompact(m.volume) : "—"} · Liq: {m.liquidity != null ? formatCompact(m.liquidity) : "—"}
+                    </div>
+
+                    <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+                      <button
+                        className="vote-btn"
+                        disabled={voting?.pid === ritualPid}
+                        onClick={() => vote(ritualPid, "YES")}
+                        style={voteButtonStyle(myVote === "YES", "yes")}
+                      >
+                        YES
+                      </button>
+                        <button
+                          className="vote-btn"
+                          disabled={voting?.pid === ritualPid}
+                          onClick={() => vote(ritualPid, "NO")}
+                          style={{
+                            ...styles.noBtn,
+                            opacity: voting?.pid === ritualPid ? 0.6 : 1,
+                            background: myVote === "NO" ? "#7a1f1f" : theme === "dark" ? "rgba(122,31,31,0.12)" : "#fdecec",
+                            color: theme === "dark" ? "#fff" : "#500000",
+                          }}
+                        >
+                          NO 
+                        </button>
+                      </div>
+
+                      <div style={styles.removeVoteWrap}>
+                        {myVote && <button onClick={() => removeVote(ritualPid)} style={styles.removeVote}>Remove vote</button>}
+                      </div>
+
+                      {/* ✅ Ritual vote bar */}
+                      <div className="bar" style={{ ...styles.bar, background: theme === "dark" ? "#111" : "#f1f5f9" }}>
+                        <div className="bar-yes" style={{ ...styles.barYes, width: `${ritualYesPct}%` }} />
+                        <div className="bar-no" style={{ ...styles.barNo, width: `${ritualNoPct}%` }} />
+                      </div>
+
+                      <div style={styles.meta}>
+                        <span style={{ color: theme === "dark" ? "#cfe9d7" : "#0b4d22" }}> YES {ritualYesPct}%</span>
+                        <span style={{ color: theme === "dark" ? "#f4cfcf" : "#5b1f1f" }}> NO {ritualNoPct}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {view === "history" && (
+            <div className="view-panel">
+              <h2 style={styles.sectionTitle}>Your activity</h2>
+              <p style={styles.sectionSub}>Recent faucet claims, votes and refunds</p>
+              {renderHistory()}
+            </div>
+          )}
+
+          {view === "leaderboard" && (
+            <div className="view-panel">
+              <h2 style={styles.sectionTitle}>Leaderboard</h2>
+              <p style={styles.sectionSub}>Top contributors by votes</p>
+              {renderLeaderboard()}
+            </div>
+          )}
+        </section>
+
+        {/* Add prediction modal */}
+        {showAddModal && (
+          <div style={styles.modalBackdrop}>
+            <div style={{ ...styles.modal, maxWidth: 520, background: theme === "dark" ? "#121212" : "#fff", color: theme === "dark" ? "#eaeaea" : "#111" }}>
+              <h3 style={{ margin: 0 }}>Add a prediction</h3>
+              <p style={{ marginTop: 8, color: theme === "dark" ? "#9a9a9a" : "#666" }}>
+                Provide a unique id (optional) and a question. This submits a suggestion to the server; it will appear in Market after approval.
+              </p>
+
+              <input placeholder="Unique id (optional)" value={newPid} onChange={(e) => setNewPid(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
+              <input placeholder="Question text" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
+              <input placeholder="Yes label (optional)" value={newYesLabel} onChange={(e) => setNewYesLabel(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
+              <input placeholder="No label (optional)" value={newNoLabel} onChange={(e) => setNewNoLabel(e.target.value)} style={{ ...styles.input, marginTop: 8, background: theme === "dark" ? "#0e0e0e" : "#fff", color: theme === "dark" ? "#fff" : "#111", border: theme === "dark" ? "1px solid #222" : "1px solid rgba(0,0,0,0.06)" }} />
+
+              {addingError && <div style={styles.error}>{addingError}</div>}
+
+              <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                <button onClick={submitNewPrediction} disabled={adding} style={styles.primaryBtn}>
+                  {adding ? "Submitting…" : "Submit suggestion"}
+                </button>
+                <button onClick={() => setShowAddModal(false)} style={styles.removeVote}>Cancel</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <AuthModal
-        visible={showAuthModal}
-        mode={mode}
-        setMode={setMode}
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        username={username}
-        setUsername={setUsername}
-        confirmPassword={confirmPassword}
-        setConfirmPassword={setConfirmPassword}
-        submit={submitAuth}
-        error={error}
-        validationError={validationError}
-        canSubmit={canSubmit}
-        authSubmitting={authSubmitting}
-        onClose={() => setShowAuthModal(false)}
-        theme={theme}
-        isMobile={isMobile}
-      />
+        <AuthModal
+          visible={showAuthModal}
+          mode={mode}
+          setMode={setMode}
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          username={username}
+          setUsername={setUsername}
+          confirmPassword={confirmPassword}
+          setConfirmPassword={setConfirmPassword}
+          submit={submitAuth}
+          error={error}
+          validationError={validationError}
+          canSubmit={canSubmit}
+          authSubmitting={authSubmitting}
+          onClose={() => setShowAuthModal(false)}
+          theme={theme}
+          isMobile={isMobile}
+        />
 
-      <Toast message={toast} />
+        <Toast message={toast} />
 
-      <footer style={styles.footer}>
-        Created by <span style={styles.footerName}>Maharshi</span>
-      </footer>
-    </main>
-  );
-}
+        <footer style={styles.footer}>
+          Created by <span style={styles.footerName}>Maharshi</span>
+        </footer>
+      </main>
+    );
+  }
 
-/* ------------------------- Common CSS & styles ------------------------- */
-function commonCss(theme) {
-  return `
-    .faucet-btn { transition: transform .18s ease, box-shadow .18s ease; }
-    .faucet-btn.pulse { animation: faucet-pulse .9s cubic-bezier(.2,.9,.3,1); }
-    @keyframes faucet-pulse { 0% { transform: scale(1) } 40% { transform: scale(1.06) } 100% { transform: scale(1) } }
+  /* ------------------------- Common CSS & styles ------------------------- */
+  function commonCss(theme) {
+    return `
+      .faucet-btn { transition: transform .18s ease, box-shadow .18s ease; }
+      .faucet-btn.pulse { animation: faucet-pulse .9s cubic-bezier(.2,.9,.3,1); }
+      @keyframes faucet-pulse { 0% { transform: scale(1) } 40% { transform: scale(1.06) } 100% { transform: scale(1) } }
 
-    .card { transition: transform .18s ease, box-shadow .18s ease; border-radius: 14px; }
-    .card:hover { transform: translateY(-6px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+      .card { transition: transform .18s ease, box-shadow .18s ease; border-radius: 14px; }
+      .card:hover { transform: translateY(-6px); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
 
-    .auth-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #000; border-right-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 8px; }
-    @keyframes spin { to { transform: rotate(360deg) } }
+      .auth-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #000; border-right-color: transparent; border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle; margin-right: 8px; }
+      @keyframes spin { to { transform: rotate(360deg) } }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .vote-row { display: flex; gap: 12px; }
-    .vote-row .vote-btn { width: 100%; border-radius: 12px; padding: 12px; min-height: 44px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+      .vote-row { display: flex; gap: 12px; }
+      .vote-row .vote-btn { width: 100%; border-radius: 12px; padding: 12px; min-height: 44px; }
 
-    @media (max-width: 720px) {
-      .card { padding: 14px !important; min-height: 120px !important; }
-      .question { font-size: 15px !important; }
-      .card .bar { height: 10px !important; }
-      .vote-row { flex-direction: column; gap: 8px; }
-      .vote-row .vote-btn { padding: 12px; width: 100%; }
-      header { padding: 14px 12px !important; }
-      .right-controls { width: 100% !important; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-      input[placeholder="Find a question fast"] { width: 100% !important; margin-left: 0 !important; }
-      .modal { width: 94% !important; padding: 14px !important; }
-    }
+      @media (max-width: 720px) {
+        .card { padding: 14px !important; min-height: 120px !important; }
+        .question { font-size: 15px !important; }
+        .card .bar { height: 10px !important; }
+        .vote-row { flex-direction: column; gap: 8px; }
+        .vote-row .vote-btn { padding: 12px; width: 100%; }
+        header { padding: 14px 12px !important; }
+        .right-controls { width: 100% !important; margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+        input[placeholder="Find a question fast"] { width: 100% !important; margin-left: 0 !important; }
+        .modal { width: 94% !important; padding: 14px !important; }
+      }
 
-    @media (min-width: 721px) and (max-width: 1024px) {
-      .card { padding: 16px !important; }
-      .question { font-size: 15px !important; }
-    }
+      @media (min-width: 721px) and (max-width: 1024px) {
+        .card { padding: 16px !important; }
+        .question { font-size: 15px !important; }
+      }
 
-    body { background: ${theme === "dark" ? "#0a0a0a" : "#f5f9fb"}; }
-  `;
-}
+      body { background: ${theme === "dark" ? "#0a0a0a" : "#f5f9fb"}; }
+    `;
+  }
 
-const styles = {
-  page: { minHeight: "100vh", padding: "20px 18px", fontFamily: "Inter, system-ui, sans-serif" },
-  header: { maxWidth: 1200, margin: "0 auto 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
-  brandWrap: { display: "flex", gap: 12, alignItems: "center" },
-  logo: { width: 52, height: 52, objectFit: "contain" },
+  const styles = {
+    page: { minHeight: "100vh", padding: "20px 18px", fontFamily: "Inter, system-ui, sans-serif" },
+    header: { maxWidth: 1200, margin: "0 auto 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 },
+    brandWrap: { display: "flex", gap: 12, alignItems: "center" },
+    logo: { width: 52, height: 52, objectFit: "contain" },
 
-  rightControls: { display: "flex", gap: 12, alignItems: "center" },
+    rightControls: { display: "flex", gap: 12, alignItems: "center" },
 
-  tabBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#cfcfcf", padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontSize: 13 },
-  tabActive: { background: "linear-gradient(180deg,#243922,#163d20)", border: "1px solid rgba(31,122,74,0.45)", color: "#fff" },
+    tabBtn: { background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#cfcfcf", padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontSize: 13 },
+    tabActive: { background: "linear-gradient(180deg,#243922,#163d20)", border: "1px solid rgba(31,122,74,0.45)", color: "#fff" },
 
-  faucetBtn: { background: "#1f7a4a", border: "none", borderRadius: 10, padding: "6px 10px", color: "#fff", fontSize: 12, cursor: "pointer" },
-  logoutBtn: { background: "#111", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "6px 10px", color: "#fff", cursor: "pointer" },
-  secondaryBtn: { background: "transparent", color: "#cfcfcf", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 10px", cursor: "pointer", fontSize: 13 },
+    faucetBtn: { background: "#1f7a4a", border: "none", borderRadius: 10, padding: "6px 10px", color: "#fff", fontSize: 12, cursor: "pointer" },
+    logoutBtn: { background: "#111", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: "6px 10px", color: "#fff", cursor: "pointer" },
+    secondaryBtn: { background: "transparent", color: "#cfcfcf", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 10, padding: "6px 10px", cursor: "pointer", fontSize: 13 },
 
-  container: { maxWidth: 1200, margin: "0 auto", paddingTop: 6 },
-  grid: { display: "grid", gap: 16 },
+    container: { maxWidth: 1200, margin: "0 auto", paddingTop: 6 },
+    grid: { display: "grid", gap: 16 },
 
-  card: { borderRadius: 14, padding: 18, display: "flex", flexDirection: "column", gap: 12, minHeight: 140, boxSizing: "border-box", width: "100%" },
-  voteRow: { display: "flex", gap: 12, alignItems: "center" },
-  yesBtn: { flex: 1, padding: 12, borderRadius: 12, cursor: "pointer", border: "none", fontWeight: 700, minHeight: 44 },
-  noBtn: { flex: 1, padding: 12, borderRadius: 12, cursor: "pointer", border: "none", fontWeight: 700, minHeight: 44 },
+    card: { borderRadius: 14, padding: 18, display: "flex", flexDirection: "column", gap: 12, minHeight: 140, boxSizing: "border-box", width: "100%" },
+    voteRow: { display: "flex", gap: 12, alignItems: "center" },
+    yesBtn: { flex: 1, padding: 12, borderRadius: 12, cursor: "pointer", border: "none", fontWeight: 700, minHeight: 44 },
+    noBtn: { flex: 1, padding: 12, borderRadius: 12, cursor: "pointer", border: "none", fontWeight: 700, minHeight: 44 },
 
-  removeVote: { fontSize: 12, opacity: 0.85, background: "none", border: "none", color: "#9a9a9a", cursor: "pointer", padding: 0, lineHeight: "18px", textAlign: "center", width: "100%" },
+    removeVote: { fontSize: 12, opacity: 0.85, background: "none", border: "none", color: "#9a9a9a", cursor: "pointer", padding: 0, lineHeight: "18px", textAlign: "center", width: "100%" },
 
-  bar: { height: 12, borderRadius: 8, overflow: "hidden", display: "flex" },
-  barYes: { background: "#1f7a4a", height: "100%" },
-  barNo: { background: "#7a1f1f", height: "100%" },
+    bar: { height: 12, borderRadius: 8, overflow: "hidden", display: "flex" },
+    barYes: { background: "#1f7a4a", height: "100%" },
+    barNo: { background: "#7a1f1f", height: "100%" },
 
-  meta: { display: "flex", justifyContent: "space-between", fontSize: 13 },
+    meta: { display: "flex", justifyContent: "space-between", fontSize: 13 },
 
-  sectionTitle: { margin: "12px 0 4px", fontSize: 18 },
-  sectionSub: { margin: "0 0 12px", color: "#9a9a9a", fontSize: 13 },
+    sectionTitle: { margin: "12px 0 4px", fontSize: 18 },
+    sectionSub: { margin: "0 0 12px", color: "#9a9a9a", fontSize: 13 },
 
-  historyList: { display: "flex", flexDirection: "column", gap: 10 },
-  historyItem: { display: "flex", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 12, background: "rgba(0,0,0,0.02)" },
-  historyLeft: { display: "flex", flexDirection: "column" },
-  historyType: { fontSize: 13, fontWeight: 600 },
-  historyMeta: { fontSize: 12, color: "#9a9a9a" },
-  historyRight: { textAlign: "right", display: "flex", flexDirection: "column", gap: 4 },
-  historyTime: { fontSize: 11, color: "#8f8f8f" },
+    historyList: { display: "flex", flexDirection: "column", gap: 10 },
+    historyItem: { display: "flex", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 12, background: "rgba(0,0,0,0.02)" },
+    historyLeft: { display: "flex", flexDirection: "column" },
+    historyType: { fontSize: 13, fontWeight: 600 },
+    historyMeta: { fontSize: 12, color: "#9a9a9a" },
+    historyRight: { textAlign: "right", display: "flex", flexDirection: "column", gap: 4 },
+    historyTime: { fontSize: 11, color: "#8f8f8f" },
 
-  leaderboardList: { display: "flex", flexDirection: "column", gap: 10 },
-  lbItem: { display: "flex", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 12 },
-  lbLeft: { display: "flex", gap: 12, alignItems: "center" },
-  lbRank: { width: 44, textAlign: "center", fontWeight: 700, color: "#6b6b6b" },
-  lbName: { fontWeight: 700 },
-  lbSub: { fontSize: 12, color: "#9a9a9a" },
-  lbRight: { textAlign: "right" },
-  lbCredits: { fontWeight: 800 },
+    leaderboardList: { display: "flex", flexDirection: "column", gap: 10 },
+    lbItem: { display: "flex", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 12 },
+    lbLeft: { display: "flex", gap: 12, alignItems: "center" },
+    lbRank: { width: 44, textAlign: "center", fontWeight: 700, color: "#6b6b6b" },
+    lbName: { fontWeight: 700 },
+    lbSub: { fontSize: 12, color: "#9a9a9a" },
+    lbRight: { textAlign: "right" },
+    lbCredits: { fontWeight: 800 },
 
-  empty: { color: "#9a9a9a", padding: 14 },
+    empty: { color: "#9a9a9a", padding: 14 },
 
-  modalBackdrop: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60 },
-  modal: { background: "#121212", border: "1px solid #1f1f1f", borderRadius: 12, padding: 20, width: "95%", maxWidth: 520, display: "flex", flexDirection: "column", gap: 12 },
+    modalBackdrop: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 60 },
+    modal: { background: "#121212", border: "1px solid #1f1f1f", borderRadius: 12, padding: 20, width: "95%", maxWidth: 520, display: "flex", flexDirection: "column", gap: 12 },
 
-  input: { borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box", border: "1px solid rgba(0,0,0,0.06)" },
-  primaryBtn: { background: "#1f7a4a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 12px", fontWeight: 700, cursor: "pointer" },
-  switchBtn: { background: "transparent", border: "none", color: "#9a9a9a", cursor: "pointer" },
+    input: { borderRadius: 10, padding: "10px 12px", fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box", border: "1px solid rgba(0,0,0,0.06)" },
+    primaryBtn: { background: "#1f7a4a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 12px", fontWeight: 700, cursor: "pointer" },
+    switchBtn: { background: "transparent", border: "none", color: "#9a9a9a", cursor: "pointer" },
 
-  removeVoteWrap: { height: 18, marginTop: 6, display: "flex", alignItems: "center" },
+    removeVoteWrap: { height: 18, marginTop: 6, display: "flex", alignItems: "center" },
 
-  questionWrap: { minHeight: 64, display: "flex", alignItems: "flex-start" },
-  question: { margin: 0, fontSize: 16, fontWeight: 600, lineHeight: "1.35", whiteSpace: "normal", wordBreak: "break-word" },
+    questionWrap: { minHeight: 64, display: "flex", alignItems: "flex-start" },
+    question: { margin: 0, fontSize: 16, fontWeight: 600, lineHeight: "1.35", whiteSpace: "normal", wordBreak: "break-word" },
 
-  myBetsEmpty: { color: "#9a9a9a", padding: 8 },
-  myBetsList: { display: "flex", flexDirection: "column", gap: 8, marginTop: 8 },
-  myBetItem: { padding: 8, borderRadius: 8, background: "rgba(0,0,0,0.02)" },
+    myBetsEmpty: { color: "#9a9a9a", padding: 8 },
+    myBetsList: { display: "flex", flexDirection: "column", gap: 8, marginTop: 8 },
+    myBetItem: { padding: 8, borderRadius: 8, background: "rgba(0,0,0,0.02)" },
 
-  footer: { marginTop: 40, textAlign: "center", color: "#9a9a9a" },
-  footerName: { color: "#eaeaea", fontWeight: 600 },
+    footer: { marginTop: 40, textAlign: "center", color: "#9a9a9a" },
+    footerName: { color: "#eaeaea", fontWeight: 600 },
 
-  toast: { position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#1f7a4a", color: "#fff", padding: "10px 18px", borderRadius: 14, zIndex: 60 },
+    toast: { position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "#1f7a4a", color: "#fff", padding: "10px 18px", borderRadius: 14, zIndex: 60 },
 
-  error: { color: "#ff6b6b" },
-};
+    error: { color: "#ff6b6b" },
+  };
