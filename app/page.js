@@ -18,79 +18,75 @@ const WEEKLY_PREDICTIONS = [
   yesLabel: "Moctx",
   noLabel: "Joyesh",
 },
-{
-  pid: "212",
-  question: "Itoshi vs Gurujji — who takes this Ritualist matchup?",
-  yesLabel: "Itoshi",
-  noLabel: "Gurujji",
-},
-{
-  pid: "213",
-  question: "Pixel vs Osargi — who’s the stronger Ritualist?",
-  yesLabel: "Pixel",
-  noLabel: "Osargi",
-},
-{
-  pid: "214",
-  question: "Marcellus vs Oluwasegun — who dominates this Ritualist round?",
-  yesLabel: "Marcellus",
-  noLabel: "Oluwasegun",
-},
+    {
+    pid: "202",
+    question: "Bunsdev vs Elif Hilal Kara — who’s your favorite Ritual developer?",
+    yesLabel: "Bunsdev",
+    noLabel: "Elif Hilal Kara",
+  },
+  {
+    pid: "203",
+    question: "Stefan vs Dunken — who’s been more consistent as a moderator?",
+    yesLabel: "Stefan",
+    noLabel: "Dunken",
+  },
 
-// ⚡ Ritty Battles
-{
-  pid: "215",
-  question: "Maharshi vs Kastew — who wins this Ritty battle?",
-  yesLabel: "Maharshi",
-  noLabel: "Kastew",
-},
-{
-  pid: "216",
-  question: "Harix vs Rajlol — who’s taking this Ritty matchup?",
-  yesLabel: "Harix",
-  noLabel: "Rajlol",
-},
-{
-  pid: "217",
-  question: "Cripson vs Oahid — who comes out on top?",
-  yesLabel: "Cripson",
-  noLabel: "Oahid",
-},
-{
-  pid: "218",
-  question: "Preshy vs JT — who wins this Ritty faceoff?",
-  yesLabel: "Preshy",
-  noLabel: "JT",
-},
-{
-  pid: "219",
-  question: "Tanoy vs Believe — who claims this Ritty round?",
-  yesLabel: "Tanoy",
-  noLabel: "Believe",
-},
+  // 🏗️ Builders
+  {
+    pid: "204",
+    question: "Meison vs Maharshi — who’s shipping better builder work?",
+    yesLabel: "Meison",
+    noLabel: "Maharshi",
+  },
+  {
+    
+    pid: "205",
+    question:
+     "Tanoy vs Elijah — who’s the stronger builder right now?",
+    yesLabel: "Tanoy",
+    noLabel: "Elijah",
+  },
 
-// 🔹 Bitty Battles
-{
-  pid: "220",
-  question: "Rooh vs Palak — who wins this Bitty battle?",
-  yesLabel: "Rooh",
-  noLabel: "Palak",
-},
-{
-  pid: "221",
-  question: "TCmain vs Rahul — who takes this Bitty matchup?",
-  yesLabel: "TCmain",
-  noLabel: "Rahul",
-},
-{
-  pid: "222",
-  question: "Yuta vs Okustu — who dominates this Bitty round?",
-  yesLabel: "Yuta",
-  noLabel: "Okustu",
-},
+  // 😂 Memes
+  {
+    pid: "206",
+    question: "Moctx vs Oahid — who’s dropping better memes?",
+    yesLabel: "Moctx",
+    noLabel: "Oahid",
+  },
 
-// ✨ Radiant Ritualist
+  // 🎨 Art
+  {
+    pid: "207",
+    question: "Mathson vs Osaragi — who’s producing better art lately?",
+    yesLabel: "Mathson",
+    noLabel: "Osaragi",
+  },
+  {
+    pid: "208",
+    question: "Gill vs Pixel — whose art is stronger overall?",
+    yesLabel: "Gill",
+    noLabel: "Pixel",
+  },
 
+  // ✍️ Content
+  {
+    pid: "209",
+    question: "Maharshi vs G9D — who’s writing more valuable content?",
+    yesLabel: "Maharshi",
+    noLabel: "G9D",
+  },
+
+  // 💬 Chat
+  {
+    pid: "210",
+    question: "JT vs Cass — who’s more active in chat?",
+    yesLabel: "JT",
+    noLabel: "Cass",
+  },
+
+  // 🧠 Ritual Dev Team (new pid range)
+ 
 ];
 
 /* -------------------- Weekly Market Timer Helper -------------------- */
