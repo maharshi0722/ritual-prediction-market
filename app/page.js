@@ -57,6 +57,12 @@ const WEEKLY_PREDICTIONS = [
   noLabel: "Oahid",
 },
 {
+  pid: "25",
+  question: "Katty vs Anirudh — who wins this Ritty battle?",
+  yesLabel: "katty",
+  noLabel: "Anirudh",
+},
+{
   pid: "218",
   question: "Preshy vs JT — who wins this Ritty faceoff?",
   yesLabel: "Preshy",
